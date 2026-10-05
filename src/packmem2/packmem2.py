@@ -280,6 +280,11 @@ def launch(
         firstCoorLo_defects_Deep = d.del_key_dict(
             firstCoorLo_defects_Deep, edge_labelsLo_Deep
         )
+
+        # Preserve unfiltered labels for shallow classification.
+        MatrixUp_labels_Deep_raw = MatrixUp_labels_Deep.copy()
+        MatrixLo_labels_Deep_raw = MatrixLo_labels_Deep.copy()
+        
         for edge_lab in edge_labelsUp_Deep:
             ind = np.where(MatrixUp_labels_Deep == edge_lab)
             MatrixUp_labels_Deep[ind] = 0
@@ -326,6 +331,11 @@ def launch(
         firstCoorLo_defects_All = d.del_key_dict(
             firstCoorLo_defects_All, edge_labelsLo_All
         )
+
+        # Preserve unfiltered labels for shallow classification.
+        MatrixUp_labels_All_raw = MatrixUp_labels_All.copy()
+        MatrixLo_labels_All_raw = MatrixLo_labels_All.copy()
+
         for edge_lab in edge_labelsUp_All:
             ind = np.where(MatrixUp_labels_All == edge_lab)
             MatrixUp_labels_All[ind] = 0
@@ -336,10 +346,10 @@ def launch(
         #### Shallow ####
         # Binarise
         # Get where there are labels
-        ind_lab_Deep_Up = np.argwhere(MatrixUp_labels_Deep != 0)
-        ind_lab_All_Up = np.argwhere(MatrixUp_labels_All != 0)
-        ind_lab_Deep_Lo = np.argwhere(MatrixLo_labels_Deep != 0)
-        ind_lab_All_Lo = np.argwhere(MatrixLo_labels_All != 0)
+        ind_lab_Deep_Up = np.argwhere(MatrixUp_labels_Deep_raw != 0)
+        ind_lab_All_Up = np.argwhere(MatrixUp_labels_All_raw != 0)
+        ind_lab_Deep_Lo = np.argwhere(MatrixLo_labels_Deep_raw != 0)
+        ind_lab_All_Lo = np.argwhere(MatrixLo_labels_All_raw != 0)
         # Convert them to be array of tuple to compare them
         set_ind_Deep_Up = set(map(tuple, ind_lab_Deep_Up))
         set_ind_Deep_Lo = set(map(tuple, ind_lab_Deep_Lo))
