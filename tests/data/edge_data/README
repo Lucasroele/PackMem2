@@ -1,0 +1,4 @@
+output0_Up_Deep_result.txt has no edge defects
+
+packmem2 -s POPC_memb.gro -f 2_frames.xtc -l POPC
+-r "$HOME/src/PackMem2/data/vdw_radii_Charmm.txt" -p "$HOME/src/PackMem2/data/param_Charmm.txt"

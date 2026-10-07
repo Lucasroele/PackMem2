@@ -3,4 +3,6 @@ addopts = ["--strict-markers"]
 markers = [
     "slowest: slowest tests that should not run in CI",
 ]
-
+filterwarnings = [
+    "ignore:.*r_squared is low:UserWarning"
+]

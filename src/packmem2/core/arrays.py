@@ -6,6 +6,7 @@ import numpy as np
 from MDAnalysis import ResidueGroup
 
 from packmem2.core import matrix as m
+from packmem2.core.constants import DECIMALS, SIZE
 
 
 def get_glyc_lipids(lipid_list: list, resname_glyc: dict) -> str:
@@ -52,11 +53,29 @@ def min_max_mean(data: np.array) -> tuple[float, float, float]:
     float
         The mean of the data
     """
-    mini = min(data)
-    maxi = max(data)
     mean = np.mean(data)
-    return mini, maxi, mean
+    return *min_max(data), mean
 
+
+def min_max(data: np.array) -> tuple[float, float]:
+    """
+    Find the minimum, maximum and mean of an array.
+
+    --------------------
+    INPUT
+    data: numpy array
+
+    --------------------
+    OUTPUT
+    float
+        The minimum of the data
+    float
+        The maximum of the data
+    """
+    mini = np.min(data)
+    maxi = np.max(data)
+    return mini, maxi
+    
 
 def create_array(v1: float, v2: float, step: float) -> np.array:
     """
@@ -118,11 +137,11 @@ def create_arrayZ(
         z_coord = atom.position[2]
         if up:
             tmp = create_array(
-                round(z_coord - dist_suppl_Z, 2), round(z_extr + 1.0, 2), m.SIZE
+                round(z_coord - dist_suppl_Z, DECIMALS), round(z_extr + 1.0, DECIMALS), SIZE
             )
         else:
             tmp = create_array(
-                round(z_coord + dist_suppl_Z, 2), round(z_extr - 1.0, 2), -m.SIZE
+                round(z_coord + dist_suppl_Z, DECIMALS), round(z_extr - 1.0, DECIMALS), -SIZE
             )
         # Reverse it
         tmp = np.flip(tmp)

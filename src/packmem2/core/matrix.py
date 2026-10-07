@@ -4,11 +4,7 @@
 
 import math
 import numpy as np
-
-# matrix size  (square size = 1A)
-SIZE = 1.0
-# calculate limit size (half diagonal) 3D (= 0.87 A)
-SIZE_SIDE = 0.5 * (math.sqrt((math.pow(SIZE, 2)) * 3.0))
+from packmem2.core.constants import MAX_GRID_SEARCH_CELLS, SIZE, SIZE_SIDE
 
 
 def initialize_matrix2D(val1: int, val2: int, default: int | float | str) -> np.array:
@@ -74,8 +70,12 @@ def find_X_Y(coord: np.array, matX: np.array, matY: np.array) -> tuple[int, int]
         the index of the coord x and y of the atom in matX and matY
     """
     # Convert to integer
-    tmpX = int(coord[0])
-    tmpY = int(coord[1])
+    if float(SIZE) != 1.000:
+        tmpX = int(coord[0] / float(SIZE))
+        tmpY = int(coord[1] / float(SIZE))
+    else:
+        tmpX = int(coord[0])
+        tmpY = int(coord[1])
     # Find the index of the value given (x_atom or y_atom)
     iX = np.where(matX == tmpX)[0][0]
     iY = np.where(matY == tmpY)[0][0]
@@ -108,6 +108,7 @@ def check_edges(val: int, val_lim1: int, val_lim2: int) -> int:
         return val
 
 
+# This is used once for each leaflet
 def fill_matrix(
     mat: np.array,
     radius_atm: float,
@@ -147,7 +148,7 @@ def fill_matrix(
         0 if it's a defect
     """
     # Number of cells to work around
-    v = min(5, len(arrayX) // 2, len(arrayY) // 2)
+    v = min(MAX_GRID_SEARCH_CELLS, len(arrayX) // 2, len(arrayY) // 2)
     # Limit distance to roughly select the cells that are near the atom+radius
     sqrtdist_lim = (SIZE + radius_atm) ** 2
     # Limit distance to select the cells that intersect the atom+radius
@@ -158,6 +159,8 @@ def fill_matrix(
     iX = check_edges(iX, v, len(arrayX))
     iY = check_edges(iY, v, len(arrayY))
     # Select the cells to work in at i+-v (to not spend too much time on useless cells)
+    #gridX = np.arange(iX - v, iX + v + SIZE, SIZE)
+    #gridY = np.arange(iY - v, iY + v + SIZE, SIZE)
     gridX = arrayX[iX - v : iX + v + 1]
     gridY = arrayY[iY - v : iY + v + 1]
     # Find the closest distance in Z
@@ -190,7 +193,7 @@ def fill_matrix(
 
 
 def binarize_matrix_without0(
-    mat: np.array, mat_ini: np.array, val1: float = 0.0, val2: float = 0.99
+    mat: np.array, val1: float = 0.0, val2: float = 0.99
 ) -> np.array:
     """
     Binarise the presence / absence of aliphatic atom (and packing defects) in matrix.
@@ -199,8 +202,6 @@ def binarize_matrix_without0(
     INPUT
     mat: numpy matrix
         Contains where there are atoms in the simulation box and their type
-    mat_ini: numpy matrix
-        Matrix to be binarised
     val1: float
         lower limit value
     val2: float
@@ -209,14 +210,10 @@ def binarize_matrix_without0(
     --------------------
     OUTPUT
     numpy matrix
-        Contains the position of the aliphatic / polar atoms (+ packing defects) (1)
-        in the simulation box
+        Boolean mask containing the position of the aliphatic / polar atoms
+        (+ packing defects) in the simulation box
     """
-    # Get the index of the polar atoms / deep defects if val2 = 0.99
-    # Get the index of the apolar atoms if val 2 = 0.001
-    index = np.argwhere((mat >= val2) | (mat <= val1))
-    mat_ini[index[:, 0], index[:, 1]] = 1.0
-    return mat_ini
+    return (mat >= val2) | (mat <= val1)
 
 
 def count_edge_area(area_defects: dict, edge_labels: list) -> int:

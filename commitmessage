@@ -1,0 +1,14 @@
+removed from testing the warning:
+    `Warning: r_squared is low...`
+
+Added testing for `packmem2.py` edge handling
+
+Removed superfluous mean x,y mean calculation in `packmem2.py`
+
+Added a .yml for reproducibility
+
+Moved some constants into `core/constansts.py`
+
+`matrix.binarize_matrix_without0()` now actually binarizes
+
+

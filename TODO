@@ -1,0 +1,6 @@
+tests/test_launch_packmem2.py::test_launch_DLPC
+tests/test_launch_packmem2.py::test_launch_DLPC_multiprocess
+  /opt/homebrew/Caskroom/miniconda/base/envs/py313/lib/python3.13/site-packages/packmem2/analysis.py:144: UserWarning: Warning: r_squared is low (0.73).Please provide more frames to packmem2
+    warnings.warn(f"Warning: r_squared is low ({r_squared:.2f})."
+
+put the actual versions of everythign into the yml

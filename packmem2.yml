@@ -1,0 +1,12 @@
+name: packmem2
+channels:
+    - conda-forge
+    - pypi
+dependencies:
+    - python=3.13
+    - pytest
+    - numpy
+    - numba
+    - MDAnalysis
+    - pip:
+      - .

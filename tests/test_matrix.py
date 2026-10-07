@@ -45,10 +45,10 @@ def test_fill_matrix():
     np.testing.assert_array_equal(tested_ouput, wanted_output)
 
 def test_binarize_matrix_without0():
-    Matrix_bin = np.full((4, 4), 0.)
     Matrix = np.array([[0.0, 0.003, 5.0, 0.5], [0.001, 0.003, 1.005, 0.003], [0.99, 0.003, 0.003, 0.003], [0.0, 0.0, 0.001, 0.0]])
-    tested_ouput = Matrix_bin = m.binarize_matrix_without0(Matrix, Matrix_bin , -0.01, 0.99)
-    wanted_output = np.array([[0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 1.0, 0.0], [1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]])
+    tested_ouput = m.binarize_matrix_without0(Matrix, -0.01, 0.99)
+    wanted_output = np.array([[False, False, True, False], [False, False, True, False], [True, False, False, False], [False, False, False, False]])
+    assert tested_ouput.dtype == bool
     np.testing.assert_array_equal(tested_ouput, wanted_output)
 
 def test_count_edge_area():

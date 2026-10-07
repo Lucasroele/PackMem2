@@ -6,6 +6,7 @@ import numpy as np
 import MDAnalysis
 
 from packmem2.core import matrix as m
+from packmem2.core.constants import DECIMALS
 
 
 def find_protein(
@@ -42,9 +43,9 @@ def find_protein(
     for i in range(len(protein.resids)):
         # Get the coordinates X Y Z
         coordtmp = [
-            protein.positions[i, 0].round(2),
-            protein.positions[i, 1].round(2),
-            protein.positions[i, 2].round(2),
+            protein.positions[i, 0].round(DECIMALS),
+            protein.positions[i, 1].round(DECIMALS),
+            protein.positions[i, 2].round(DECIMALS),
         ]
         iX, iY = m.find_X_Y(coordtmp, arrayX, arrayY)
         # Upper leaflet

@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.analysis.leaflet import LeafletFinder
+import MDAnalysis.transformations as trans
 from scipy.spatial.distance import cdist
 from packmem2.core import arrays as a
 from packmem2.core import matrix as m
@@ -17,13 +18,14 @@ from packmem2.core import connected_component as cc
 from packmem2.core import dict as d
 from packmem2.core import param as p
 from packmem2.core import protein as prot
+from packmem2.core.constants import DECIMALS, MAX_Z_DISTANCE, SIZE
 
-# Ignore the warning for longdouble due to MDAnalysis' import of h5py
-warnings.filterwarnings(
-    "ignore",
-    message="Signature .* for <class 'numpy.longdouble'> does not match any known type.*",
-    category=UserWarning,
-)
+## Ignore the warning for longdouble due to MDAnalysis' import of h5py
+#warnings.filterwarnings(
+#    "ignore",
+#    message="Signature .* for <class 'numpy.longdouble'> does not match any known type.*",
+#    category=UserWarning,
+#)
 
 
 ##########################################################################################
@@ -80,6 +82,7 @@ def launch(
             3,close,6
     """
     start_time = time.time()
+    wrapped = True
 
     ######### READ PARAM FILES #########
     # RESNAME_GLYC = {'DOP': 'C2', 'DOE': 'C2', 'DPP': 'C2', etc}
@@ -109,12 +112,20 @@ def launch(
     else:
         upper_leaflet_ori, lower_leaflet_ori = p.read_ndx(indexFile)
 
+    if not wrapped:
+        u.trajectory.add_transformations(trans.wrap(u.atoms))
+
     ############################## Main loop ##################################
     for ts in u.trajectory[start : end + 1]:
         print(f"Frame {ts.frame} {f'/ {end}':>5}", end="\r", flush=True)
         # select all atoms in systems
         system = u.select_atoms(f"resname {lipid_names} or protein")
-
+#        assert min(system.positions[:,0]) >= 0.0, "The system is not wrapped, please use the -wrap option"
+#        assert max(system.positions[:,0]) <= u.dimensions[0], "The system is not wrapped, please use the -wrap option"
+#        assert min(system.positions[:,1]) >= 0.0, "The system is not wrapped, please use the -wrap option"
+#        assert max(system.positions[:,1]) <= u.dimensions[1], "The system is not wrapped, please use the -wrap option"
+#        assert min(system.positions[:,2]) >= 0.0, "The system is not wrapped, please use the -wrap option"
+#        assert max(system.positions[:,2]) <= u.dimensions[2], "The system is not wrapped, please use the -wrap option"
         # Get all the residues in the membrane
         res_ids = system.resids
         md_uniq_ids = list(set(res_ids))
@@ -160,15 +171,16 @@ def launch(
             lower_leaflet = lower_leaflet_ori
 
         # Get all x, y and z
-        x_atoms = system.positions[:, 0].round(2)
-        y_atoms = system.positions[:, 1].round(2)
-        z_atoms = system.positions[:, 2].round(2)
+        x_atoms = system.positions[:, 0].round(DECIMALS)
+        y_atoms = system.positions[:, 1].round(DECIMALS)
+        z_atoms = system.positions[:, 2].round(DECIMALS)
         coords = np.stack((x_atoms, y_atoms, z_atoms), axis=1)
         # Get membrane dimension
-        xmin, xmax, xmean = a.min_max_mean(x_atoms)
-        ymin, ymax, ymean = a.min_max_mean(y_atoms)
+        xmin, xmax = a.min_max(x_atoms)
+        ymin, ymax = a.min_max(y_atoms)
         zmin, zmax, zmean = a.min_max_mean(z_atoms)
 
+        # Build an array from glycerol sn2 C + offset to zmax every SIZE
         upper_arrayZ = a.create_arrayZ(
             system.residues, upper_leaflet, RESNAME_GLYC, dist_suppl_Z, zmax
         )
@@ -177,15 +189,18 @@ def launch(
         )
 
         # Build an array from xmin-1 to xmax+1 every 1.0
-        arrayX = a.create_array(int(xmin - 1), int(xmax + 2), m.SIZE)
+        #arrayX = a.create_array(0, u.dimensions[0] + SIZE, SIZE)
         # Build an array from ymin-1 to ymax+1 every 1.0
-        arrayY = a.create_array(int(ymin - 1), int(ymax + 2), m.SIZE)
+        #arrayY = a.create_array(0, u.dimensions[1] + SIZE, SIZE)
+        # Build an array from xmin to xmax+SIZE every SIZE
+        arrayX = a.create_array(int(xmin - 1), int(xmax + 2), SIZE)
+        # Build an array from ymin-1 to ymax+1 every 1.0
+        arrayY = a.create_array(int(ymin - 1), int(ymax + 2), SIZE)
 
         ####################  Compute Matrix    #################
         Matrix_Up = m.initialize_matrix2D(len(arrayX), len(arrayY), 0.0)
         Matrix_Lo = m.initialize_matrix2D(len(arrayX), len(arrayY), 0.0)
 
-        v = 5.0
         # For each atoms of lipids
         for i, (res_id, atom_name, res_name) in enumerate(
             zip(res_ids, system.names, system.resnames)
@@ -196,10 +211,9 @@ def launch(
             #### Upper leaflet ####
             if res_id in upper_leaflet:
                 # dZ = z_C2_res - z_atom
-                dZ = round(m.diff_Z(upper_arrayZ[res_id], coordtmp[2]), 2)
-                # If dZ < 5.0
-                # To limit the search around an atom to 5 cells
-                if dZ < v:
+                dZ = round(m.diff_Z(upper_arrayZ[res_id], coordtmp[2]), DECIMALS)
+                # Limit the search around an atom in the Z direction.
+                if dZ < MAX_Z_DISTANCE:
                     # Fill the matrix with value 0 < a < 1 for aliphatic
                     # Or with > 1 if polar OR deep
                     # Defects = 0
@@ -215,10 +229,9 @@ def launch(
             #### Lower leaflet ####
             if res_id in lower_leaflet:
                 # dZ = z_C2_res - z_atom
-                dZ = round(m.diff_Z(lower_arrayZ[res_id], coordtmp[2]), 2)
-                # If dfZ > -5.0
-                # To limit the search around an atom to 5 cells
-                if dZ > -v:
+                dZ = round(m.diff_Z(lower_arrayZ[res_id], coordtmp[2]), DECIMALS)
+                # Limit the search around an atom in the Z direction.
+                if dZ > -MAX_Z_DISTANCE:
                     # Fill the matrix with value 0 < a < 1 for aliphatic
                     # Or with > 1 if polar OR deep
                     # Defects = 0
@@ -233,21 +246,16 @@ def launch(
                     )
 
         ####################  Binarise the matrix    #################
-        # Initalise matrices to 0.0
-        MatrixUp_Deepbin = m.initialize_matrix2D(len(arrayX), len(arrayY), 0.0)
-        MatrixLo_Deepbin = m.initialize_matrix2D(len(arrayX), len(arrayY), 0.0)
-        MatrixUp_Allbin = m.initialize_matrix2D(len(arrayX), len(arrayY), 0.0)
-        MatrixLo_Allbin = m.initialize_matrix2D(len(arrayX), len(arrayY), 0.0)
         MatrixUp_Shallowbin = m.initialize_matrix2D(len(arrayX), len(arrayY), 1.0)
         MatrixLo_Shallowbin = m.initialize_matrix2D(len(arrayX), len(arrayY), 1.0)
 
         #### Deep ####
         # Binarise
         MatrixUp_Deepbin = m.binarize_matrix_without0(
-            Matrix_Up, MatrixUp_Deepbin, -0.01, 0.001
+            Matrix_Up, -0.01, 0.001
         )
         MatrixLo_Deepbin = m.binarize_matrix_without0(
-            Matrix_Lo, MatrixLo_Deepbin, -0.01, 0.001
+            Matrix_Lo, -0.01, 0.001
         )
         # Packing defects determination
         MatrixUp_labels_Deep = m.initialize_matrix2D(len(arrayX), len(arrayY), 0)
@@ -281,10 +289,6 @@ def launch(
             firstCoorLo_defects_Deep, edge_labelsLo_Deep
         )
 
-        # Preserve unfiltered labels for shallow classification.
-        MatrixUp_labels_Deep_raw = MatrixUp_labels_Deep.copy()
-        MatrixLo_labels_Deep_raw = MatrixLo_labels_Deep.copy()
-        
         for edge_lab in edge_labelsUp_Deep:
             ind = np.where(MatrixUp_labels_Deep == edge_lab)
             MatrixUp_labels_Deep[ind] = 0
@@ -295,10 +299,10 @@ def launch(
         #### All ####
         # Binarise
         MatrixUp_Allbin = m.binarize_matrix_without0(
-            Matrix_Up, MatrixUp_Allbin, -0.01, 0.99
+            Matrix_Up, -0.01, 0.99
         )
         MatrixLo_Allbin = m.binarize_matrix_without0(
-            Matrix_Lo, MatrixLo_Allbin, -0.01, 0.99
+            Matrix_Lo, -0.01, 0.99
         )
         # Packing defects determination
         MatrixUp_labels_All = m.initialize_matrix2D(len(arrayX), len(arrayY), 0)
@@ -332,10 +336,6 @@ def launch(
             firstCoorLo_defects_All, edge_labelsLo_All
         )
 
-        # Preserve unfiltered labels for shallow classification.
-        MatrixUp_labels_All_raw = MatrixUp_labels_All.copy()
-        MatrixLo_labels_All_raw = MatrixLo_labels_All.copy()
-
         for edge_lab in edge_labelsUp_All:
             ind = np.where(MatrixUp_labels_All == edge_lab)
             MatrixUp_labels_All[ind] = 0
@@ -345,26 +345,10 @@ def launch(
 
         #### Shallow ####
         # Binarise
-        # Get where there are labels
-        ind_lab_Deep_Up = np.argwhere(MatrixUp_labels_Deep_raw != 0)
-        ind_lab_All_Up = np.argwhere(MatrixUp_labels_All_raw != 0)
-        ind_lab_Deep_Lo = np.argwhere(MatrixLo_labels_Deep_raw != 0)
-        ind_lab_All_Lo = np.argwhere(MatrixLo_labels_All_raw != 0)
-        # Convert them to be array of tuple to compare them
-        set_ind_Deep_Up = set(map(tuple, ind_lab_Deep_Up))
-        set_ind_Deep_Lo = set(map(tuple, ind_lab_Deep_Lo))
-        # Get the  indexes that are in All but not in Deep
-        ind_diff_Up = np.array(
-            [row for row in ind_lab_All_Up if tuple(row) not in set_ind_Deep_Up]
-        )
-        ind_diff_Lo = np.array(
-            [row for row in ind_lab_All_Lo if tuple(row) not in set_ind_Deep_Lo]
-        )
-        # Get the indexes that differs
-        if len(ind_diff_Up) != 0:
-            MatrixUp_Shallowbin[ind_diff_Up[:, 0], ind_diff_Up[:, 1]] = 0.0
-        if len(ind_diff_Lo) != 0:
-            MatrixLo_Shallowbin[ind_diff_Lo[:, 0], ind_diff_Lo[:, 1]] = 0.0
+        shallow_mask_Up = (MatrixUp_labels_All != 0) & (MatrixUp_labels_Deep == 0)
+        shallow_mask_Lo = (MatrixLo_labels_All != 0) & (MatrixLo_labels_Deep == 0)
+        MatrixUp_Shallowbin[shallow_mask_Up] = 0.0
+        MatrixLo_Shallowbin[shallow_mask_Lo] = 0.0
         # Packing defects determination
         MatrixUp_labels_Shallow = m.initialize_matrix2D(len(arrayX), len(arrayY), 0)
         MatrixLo_labels_Shallow = m.initialize_matrix2D(len(arrayX), len(arrayY), 0)
@@ -668,13 +652,13 @@ def launch(
                 )
 
     print("-- Analysis over --")
-    ran_time = round((time.time() - start_time) / 60, 2)
+    ran_time = round((time.time() - start_time) / 60, DECIMALS)
     if ran_time < 1:
-        print(f"-- Ran for {round((time.time() - start_time), 2)} second(s) --")
+        print(f"-- Ran for {round((time.time() - start_time), DECIMALS)} second(s) --")
     elif ran_time < 60:
         print(f"-- Ran for {ran_time} minute(s) --")
     else:
-        print(f"-- Ran for {round((ran_time / 60), 2)} hour(s) --")
+        print(f"-- Ran for {round((ran_time / 60), DECIMALS)} hour(s) --")
 
 
 def main() -> None:
