@@ -91,7 +91,7 @@ def test_packmem2_edgemath(tmp_path):
                 with open(file, "r") as file:
                     firstline = file.readline()
                     line_l = firstline.split()
-                    if depth == "Deep" and side == "Up" and i == 0 or depth == "Shallow":
+                    if depth == "Shallow":
                         assert line_l[-1] == line_l[-2], filename
                     else:
                         assert line_l[-1] != line_l[-2], filename

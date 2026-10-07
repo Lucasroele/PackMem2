@@ -20,13 +20,6 @@ from packmem2.core import param as p
 from packmem2.core import protein as prot
 from packmem2.core.constants import DECIMALS, MAX_Z_DISTANCE, SIZE
 
-## Ignore the warning for longdouble due to MDAnalysis' import of h5py
-#warnings.filterwarnings(
-#    "ignore",
-#    message="Signature .* for <class 'numpy.longdouble'> does not match any known type.*",
-#    category=UserWarning,
-#)
-
 
 ##########################################################################################
 def launch(
@@ -82,7 +75,7 @@ def launch(
             3,close,6
     """
     start_time = time.time()
-    wrapped = True
+    wrapped = False
 
     ######### READ PARAM FILES #########
     # RESNAME_GLYC = {'DOP': 'C2', 'DOE': 'C2', 'DPP': 'C2', etc}
@@ -120,12 +113,12 @@ def launch(
         print(f"Frame {ts.frame} {f'/ {end}':>5}", end="\r", flush=True)
         # select all atoms in systems
         system = u.select_atoms(f"resname {lipid_names} or protein")
-#        assert min(system.positions[:,0]) >= 0.0, "The system is not wrapped, please use the -wrap option"
-#        assert max(system.positions[:,0]) <= u.dimensions[0], "The system is not wrapped, please use the -wrap option"
-#        assert min(system.positions[:,1]) >= 0.0, "The system is not wrapped, please use the -wrap option"
-#        assert max(system.positions[:,1]) <= u.dimensions[1], "The system is not wrapped, please use the -wrap option"
-#        assert min(system.positions[:,2]) >= 0.0, "The system is not wrapped, please use the -wrap option"
-#        assert max(system.positions[:,2]) <= u.dimensions[2], "The system is not wrapped, please use the -wrap option"
+        assert min(system.positions[:,0]) >= 0.0, "The system is not wrapped, please use the -wrap option"
+        assert max(system.positions[:,0]) <= u.dimensions[0], "The system is not wrapped, please use the -wrap option"
+        assert min(system.positions[:,1]) >= 0.0, "The system is not wrapped, please use the -wrap option"
+        assert max(system.positions[:,1]) <= u.dimensions[1], "The system is not wrapped, please use the -wrap option"
+        assert min(system.positions[:,2]) >= 0.0, "The system is not wrapped, please use the -wrap option"
+        assert max(system.positions[:,2]) <= u.dimensions[2], "The system is not wrapped, please use the -wrap option"
         # Get all the residues in the membrane
         res_ids = system.resids
         md_uniq_ids = list(set(res_ids))
@@ -198,6 +191,9 @@ def launch(
         arrayY = a.create_array(int(ymin - 1), int(ymax + 2), SIZE)
 
         ####################  Compute Matrix    #################
+        # Will be filled with 0 < a < 1 for aliphatic atom
+        # Or with > 1 if polar OR deep
+        # Defects = 0
         Matrix_Up = m.initialize_matrix2D(len(arrayX), len(arrayY), 0.0)
         Matrix_Lo = m.initialize_matrix2D(len(arrayX), len(arrayY), 0.0)
 

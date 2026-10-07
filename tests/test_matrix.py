@@ -22,14 +22,6 @@ def test_find_X_Y():
     assert(tested_ouputX == wanted_outputX)
     assert(tested_ouputY == wanted_outputY)
 
-def test_check_edges():
-    tested_ouput_T = m.check_edges(43, 5, 107)
-    tested_ouput_F = m.check_edges(2, 5, 104)
-    wanted_output_T = 43
-    wanted_output_F = 5
-    assert(tested_ouput_T == wanted_output_T)
-    assert(tested_ouput_F ==  wanted_output_F)
-
 def test_fill_matrix():
     listX = np.arange(-1., 6., 1)
     listY = np.arange(-1., 6., 1)

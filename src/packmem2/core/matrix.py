@@ -82,30 +82,30 @@ def find_X_Y(coord: np.array, matX: np.array, matY: np.array) -> tuple[int, int]
     return iX, iY
 
 
-def check_edges(val: int, val_lim1: int, val_lim2: int) -> int:
-    """
-    Check if the cell index is lower than val_lim1 or higher than val_lim2. Changes the value of the cell index if so.
-
-    --------------------
-    INPUT
-    val: int
-        Index of the coordinate of the atom in listX or listY
-    val_lim1: int
-        The number of cell to work around the atom
-    val_lim2: int
-        The length of listX or listY
-
-    --------------------
-    OUTPUT
-    int
-        The cell index that represents the center of the search
-    """
-    if val < val_lim1:
-        return val_lim1
-    elif val >= val_lim2 - val_lim1:
-        return val_lim2 - (val_lim1 + 1)
-    else:
-        return val
+#def check_edges(val: int, val_lim1: int, val_lim2: int) -> int:
+#    """
+#    Check if the cell index is lower than val_lim1 or higher than val_lim2. Changes the value of the cell index if so.
+#
+#    --------------------
+#    INPUT
+#    val: int
+#        Index of the coordinate of the atom in listX or listY
+#    val_lim1: int
+#        The number of cell to work around the atom
+#    val_lim2: int
+#        The length of listX or listY
+#
+#    --------------------
+#    OUTPUT
+#    int
+#        The cell index that represents the center of the search
+#    """
+#    if val < val_lim1:
+#        return val_lim1
+#    elif val >= val_lim2 - val_lim1:
+#        return val_lim2 - (val_lim1 + 1)
+#    else:
+#        return val
 
 
 # This is used once for each leaflet
@@ -156,19 +156,28 @@ def fill_matrix(
     # Find the equivalent index in the matrix of the x,y positions
     iX, iY = find_X_Y(coordtmp, arrayX, arrayY)
     # Change if too close to the edge
-    iX = check_edges(iX, v, len(arrayX))
-    iY = check_edges(iY, v, len(arrayY))
     # Select the cells to work in at i+-v (to not spend too much time on useless cells)
-    #gridX = np.arange(iX - v, iX + v + SIZE, SIZE)
-    #gridY = np.arange(iY - v, iY + v + SIZE, SIZE)
-    gridX = arrayX[iX - v : iX + v + 1]
-    gridY = arrayY[iY - v : iY + v + 1]
+    if iX < v:
+        gridX = np.concatenate((arrayX[len(arrayX) - (v - iX) : len(arrayX)], arrayX[0 : iX + v + 1]))
+    elif iX >= len(arrayX) - v:
+        gridX = np.concatenate((arrayX[iX - v : len(arrayX)], arrayX[0 : v - (len(arrayX) - iX) + 1]))
+    else:
+        gridX = arrayX[iX - v : iX + v + 1]
+    assert len(gridX) == 2 * v + 1
+    if iY < v:
+        gridY = np.concatenate((arrayY[len(arrayY) - (v - iY) : len(arrayY)], arrayY[0 : iY + v + 1]))
+    elif iY >= len(arrayY) - v:
+        gridY = np.concatenate((arrayY[iY - v : len(arrayY)], arrayY[0 : v - (len(arrayY) - iY) + 1]))
+    else:
+        gridY = arrayY[iY - v : iY + v + 1]
+    assert len(gridY) == 2 * v + 1
     # Find the closest distance in Z
     sqrtdZ_min = np.min((arrayZ - coordtmp[2]) ** 2)
     if sqrtdZ_min > sqrtdist_lim:  # no close Z found
         return mat
 
     # Get all the pair of x,y possible around the atom
+    # This need to yield x and y acrross the pbc
     Xg, Yg = np.meshgrid(gridX, gridY, indexing="ij")
 
     sqrt_distances = (Xg - coordtmp[0]) ** 2 + (Yg - coordtmp[1]) ** 2
