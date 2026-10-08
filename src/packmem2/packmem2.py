@@ -169,8 +169,8 @@ def launch(
         z_atoms = system.positions[:, 2].round(DECIMALS)
         coords = np.stack((x_atoms, y_atoms, z_atoms), axis=1)
         # Get membrane dimension
-        xmin, xmax = a.min_max(x_atoms)
-        ymin, ymax = a.min_max(y_atoms)
+        #xmin, xmax = a.min_max(x_atoms)
+        #ymin, ymax = a.min_max(y_atoms)
         zmin, zmax, zmean = a.min_max_mean(z_atoms)
 
         # Build an array from glycerol sn2 C + offset to zmax every SIZE
@@ -181,14 +181,15 @@ def launch(
             system.residues, lower_leaflet, RESNAME_GLYC, dist_suppl_Z, zmin, up=False
         )
 
+        # When an element is 0 
         # Build an array from xmin-1 to xmax+1 every 1.0
-        #arrayX = a.create_array(0, u.dimensions[0] + SIZE, SIZE)
+        arrayX = a.create_array(0, u.dimensions[0] + SIZE, SIZE)
         # Build an array from ymin-1 to ymax+1 every 1.0
-        #arrayY = a.create_array(0, u.dimensions[1] + SIZE, SIZE)
-        # Build an array from xmin to xmax+SIZE every SIZE
-        arrayX = a.create_array(int(xmin - 1), int(xmax + 2), SIZE)
-        # Build an array from ymin-1 to ymax+1 every 1.0
-        arrayY = a.create_array(int(ymin - 1), int(ymax + 2), SIZE)
+        arrayY = a.create_array(0, u.dimensions[1] + SIZE, SIZE)
+        ## Build an array from xmin to xmax+SIZE every SIZE
+        #arrayX = a.create_array(int(xmin - 1), int(xmax + 2), SIZE)
+        ## Build an array from ymin-1 to ymax+1 every 1.0
+        #arrayY = a.create_array(int(ymin - 1), int(ymax + 2), SIZE)
 
         ####################  Compute Matrix    #################
         # Will be filled with 0 < a < 1 for aliphatic atom
@@ -247,6 +248,7 @@ def launch(
 
         #### Deep ####
         # Binarise
+        # Finding aliph or polar gives True entries
         MatrixUp_Deepbin = m.binarize_matrix_without0(
             Matrix_Up, -0.01, 0.001
         )

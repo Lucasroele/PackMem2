@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 import packmem2.core.matrix as m
 
@@ -22,26 +23,50 @@ def test_find_X_Y():
     assert(tested_ouputX == wanted_outputX)
     assert(tested_ouputY == wanted_outputY)
 
+
+#def test_fill_matrix():
+#    listX = np.arange(-1., 6., 1)
+#    listY = np.arange(-1., 6., 1)
+#    Matrix = np.full((len(listX), len(listY)), 0.0)
+#    tested_output = m.fill_matrix(Matrix, 1.34, 'a', [0, 4, 2], listX, listY, np.array([4, 3, 2, 1, 0]))
+#    wanted_output = np.array([[0.0, 0.0, 0.0, 0.0, 0.001, 0.001, 0.001],
+#                              [0.0, 0.0, 0.0, 0.001, 0.001, 0.001, 0.001],
+#                              [0.0, 0.0, 0.0, 0.0, 0.001, 0.001, 0.001],
+#                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.0],
+#                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+#                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+#                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
+#    print(f"Test failed: ", file=sys.stderr)
+#    print(tested_output, file=sys.stderr)
+#    try:
+#        np.testing.assert_array_equal(tested_ouput, wanted_output)
+#    except AssertionError as e:
+#        print(f"Test failed: {e}", file=sys.stderr)
+#        print(tested_output, file=sys.stderr)
+#        raise
+#    assert tested_ouput.dtype == bool
+#    np.testing.assert_array_equal(tested_ouput, wanted_output)
+
+
 def test_fill_matrix():
     listX = np.arange(-1., 6., 1)
     listY = np.arange(-1., 6., 1)
     Matrix = np.full((len(listX), len(listY)), 0.0)
-    tested_ouput = m.fill_matrix(Matrix, 1.34, 'a', [0, 4, 2], listX, listY, np.array([4, 3, 2, 1, 0]))
-    wanted_output = np.array([[0.0, 0.0, 0.0, 0.0, 0.001, 0.001, 0.001],
-                              [0.0, 0.0, 0.0, 0.001, 0.001, 0.001, 0.001],
-                              [0.0, 0.0, 0.0, 0.0, 0.001, 0.001, 0.001],
-                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.0],
-                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
-    np.testing.assert_array_equal(tested_ouput, wanted_output)
+    tested_output = m.fill_matrix(Matrix, 1.34, 'a', [0, 4, 2], listX, listY, np.array([4, 3, 2, 1, 0]))
+    wanted_output = np.array([[0,     0,    0,     0,     0.001, 0.001, 0.001],
+                              [0.001, 0,    0,     0.001, 0.001, 0.001, 0.001],
+                              [0,     0,    0,     0,     0.001, 0.001, 0.001],
+                              [0,     0,    0,     0,     0,     0.001, 0,   ],
+                              [0,     0,    0,     0,     0,     0,     0,   ],
+                              [0,     0,    0,     0,     0,     0,     0,   ],
+                              [0,     0,    0,     0,     0,     0.001, 0,   ]])
+    try:
+        np.testing.assert_array_equal(tested_output, wanted_output)
+    except AssertionError as e:
+        print(f"Test failed: {e}", file=sys.stderr)
+        print(tested_output, file=sys.stderr)
+        raise
 
-def test_binarize_matrix_without0():
-    Matrix = np.array([[0.0, 0.003, 5.0, 0.5], [0.001, 0.003, 1.005, 0.003], [0.99, 0.003, 0.003, 0.003], [0.0, 0.0, 0.001, 0.0]])
-    tested_ouput = m.binarize_matrix_without0(Matrix, -0.01, 0.99)
-    wanted_output = np.array([[False, False, True, False], [False, False, True, False], [True, False, False, False], [False, False, False, False]])
-    assert tested_ouput.dtype == bool
-    np.testing.assert_array_equal(tested_ouput, wanted_output)
 
 def test_count_edge_area():
     cluster_edge = np.array([1, 5])

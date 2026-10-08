@@ -3,6 +3,7 @@
 # M. Zygadlo 2025
 
 import math
+from packmem2.core import arrays as a
 import numpy as np
 from packmem2.core.constants import MAX_GRID_SEARCH_CELLS, SIZE, SIZE_SIDE
 
@@ -148,7 +149,9 @@ def fill_matrix(
         0 if it's a defect
     """
     # Number of cells to work around
-    v = min(MAX_GRID_SEARCH_CELLS, len(arrayX) // 2, len(arrayY) // 2)
+    x_len: int = len(arrayX)
+    y_len: int = len(arrayY)
+    v: int = min(MAX_GRID_SEARCH_CELLS, x_len // 2, y_len // 2)
     # Limit distance to roughly select the cells that are near the atom+radius
     sqrtdist_lim = (SIZE + radius_atm) ** 2
     # Limit distance to select the cells that intersect the atom+radius
@@ -157,19 +160,23 @@ def fill_matrix(
     iX, iY = find_X_Y(coordtmp, arrayX, arrayY)
     # Change if too close to the edge
     # Select the cells to work in at i+-v (to not spend too much time on useless cells)
-    if iX < v:
-        gridX = np.concatenate((arrayX[len(arrayX) - (v - iX) : len(arrayX)], arrayX[0 : iX + v + 1]))
-    elif iX >= len(arrayX) - v:
-        gridX = np.concatenate((arrayX[iX - v : len(arrayX)], arrayX[0 : v - (len(arrayX) - iX) + 1]))
+    if iX + 1 < v:
+        Xind = np.concatenate([np.arange(x_len - (v - iX) + 1, x_len), np.arange(0, iX + v + 2)])
+    elif iX + 1 >= x_len - v:
+        Xind = np.concatenate([np.arange(iX - v + 1, x_len), np.arange(0, v - (x_len - iX) + 2)])
     else:
-        gridX = arrayX[iX - v : iX + v + 1]
+        Xind = np.arange(iX - v + 1, iX + v + 2)
+    assert len(Xind) == 2 * v + 1
+    gridX = a.create_array(iX - v * SIZE, iX + (v+1) * SIZE, SIZE)
     assert len(gridX) == 2 * v + 1
-    if iY < v:
-        gridY = np.concatenate((arrayY[len(arrayY) - (v - iY) : len(arrayY)], arrayY[0 : iY + v + 1]))
-    elif iY >= len(arrayY) - v:
-        gridY = np.concatenate((arrayY[iY - v : len(arrayY)], arrayY[0 : v - (len(arrayY) - iY) + 1]))
+    if iY + 1 < v:
+        Yind = np.concatenate([np.arange(y_len - (v - iY) + 1, y_len), np.arange(0, iY + v + 2)])
+    elif iY + 1 >= y_len - v:
+        Yind = np.concatenate([np.arange(iY - v + 1, y_len), np.arange(0, v - (y_len - iY) + 2)])
     else:
-        gridY = arrayY[iY - v : iY + v + 1]
+        Yind = np.arange(iY - v + 1, iY + v + 2)
+    assert len(Yind) == 2 * v + 1
+    gridY = a.create_array(iY - v * SIZE, iY + (v+1) * SIZE, SIZE)
     assert len(gridY) == 2 * v + 1
     # Find the closest distance in Z
     sqrtdZ_min = np.min((arrayZ - coordtmp[2]) ** 2)
@@ -185,8 +192,8 @@ def fill_matrix(
     mask = sqrt_distances <= sqrtdist_meet - sqrtdZ_min
 
     # Convert the indexes to get the location in the matrix (global index) and not in the sublist (local)
-    Xind = np.arange(iX - v, iX + v + 1)
-    Yind = np.arange(iY - v, iY + v + 1)
+    #Xind = np.arange(iX - v, iX + v + 1)
+    #Yind = np.arange(iY - v, iY + v + 1)
     # Put the indexes that are in the effective radius (local) to be globalised to the matrix length
     X_idx, Y_idx = np.where(mask)  # local
     X_idx = Xind[X_idx]  # Get to global
