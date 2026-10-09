@@ -1,2 +1,7 @@
 Added wrapping
 
+`connected_components.get_connected_components()` respects edges
+
+`cc.find_label_neighbors()` respects edges
+
+These could be factored into seperate functions to skip conditional logic inside the functions

@@ -11,7 +11,7 @@ def test_packmem2(tmp_path):
     paramFile = "data/param_Charmm.txt"
     radiiFile = "data/vdw_radii_Charmm.txt"
     indexFile = None
-    output_dir = "tests/data/edge_data"
+    output_dir = tmp_path
     outputname = "POPC"
     dist_suppl_Z = 1.0
     protein = False
@@ -92,6 +92,8 @@ def test_packmem2_edgemath(tmp_path):
                     firstline = file.readline()
                     line_l = firstline.split()
                     if depth == "Shallow":
+                        assert line_l[-1] == line_l[-2], filename
+                    elif depth == "Deep" and side == "Up" and i == 0:
                         assert line_l[-1] == line_l[-2], filename
                     else:
                         assert line_l[-1] != line_l[-2], filename

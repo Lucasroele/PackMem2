@@ -140,6 +140,7 @@ def test_launch_DMPC_protein(tmp_path):
     assert expected_final_output.exists()
 
 
+@pytest.mark.slowest
 def test_launch_DLPC(tmp_path):
     """DLPC (Martini)"""
     cores = 1

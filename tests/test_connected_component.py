@@ -1,5 +1,6 @@
 import numpy as np
 import MDAnalysis as mda
+import sys
 
 import packmem2.core.connected_component as cc
 
@@ -23,6 +24,20 @@ def test_find_neighbours():
     #tested_out = cc.find_neighbours(mat, 0, 4)
     #wanted_out = [[3, 4]]
     #assert tested_out == wanted_out
+
+def test_find_neighbours_with_edge():
+    mat = np.array([[0, 0, 1, 1, 1],
+                    [1, 1, 0, 0, 1],
+                    [0, 1, 1, 0, 0]])
+    tested_out = cc.find_neighbours(mat, 0, 0)
+    wanted_out = [[2,4], [2,0]]
+    assert tested_out == wanted_out
+    tested_out = cc.find_neighbours(mat, 0, 1)
+    wanted_out = [[2,0], [0,0]]
+    assert tested_out == wanted_out
+    tested_out = cc.find_neighbours(mat, 2, 0)
+    wanted_out = [[2,4]]
+    assert tested_out == wanted_out
 
 def test_find_label_neighbours():
     mat = np.array([[1, 1, 1, 1, 2, 1],
@@ -92,6 +107,91 @@ def test_connect_labels_in_matrix():
                         [0, 0, 0, 0, 0, 0, 0]])
     np.testing.assert_array_equal(tested_out, wanted_out)
 
+def test_connect_labels_in_matrix_with_edge():
+    mat = np.array([[0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 2, 0, 0, 5, 0],
+                    [0, 1, 0, 0, 3, 9, 0],
+                    [0, 0, 0, 0, 0, 9, 0],
+                    [0, 6, 0, 4, 0, 0, 0],
+                    [0, 7, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 8, 0]])
+    dict_connected_labels = {1: 1, 2: 1, 3: 3, 4: 4, 5: 3, 6: 6, 7: 6, 8: 3, 9: 3}
+    
+    tested_out = cc.connect_labels_in_matrix(mat, dict_connected_labels)
+    wanted_out = np.array([[0, 0, 0, 0, 0, 0, 0],
+                           [0, 1, 1, 0, 0, 3, 0],
+                           [0, 1, 0, 0, 3, 3, 0],
+                           [0, 0, 0, 0, 0, 3, 0],
+                           [0, 6, 0, 4, 0, 0, 0],
+                           [0, 6, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 0, 3, 0]])
+    try:
+        np.testing.assert_array_equal(tested_out, wanted_out)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"Tested:\n{np.array2string(tested_out, separator=' ')}", file=sys.stderr)
+            print(f"Wanted:\n{np.array2string(wanted_out, separator=' ')}", file=sys.stderr)
+        raise
+    mat = np.array([[1, 2, 0, 0, 8, 0],
+                    [1, 0, 0, 3, 3, 0],
+                    [0, 0, 0, 0, 3, 0],
+                    [6, 0, 4, 0, 0, 0],
+                    [7, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 5, 0]])
+    dict_connected_labels = {1: 1, 2: 1, 3: 3, 4: 4, 5: 3, 6: 6, 7: 6, 8: 3}
+    tested_out = cc.connect_labels_in_matrix(mat, dict_connected_labels)
+    wanted_out = np.array([[1, 1, 0, 0, 3, 0],
+                           [1, 0, 0, 3, 3, 0],
+                           [0, 0, 0, 0, 3, 0],
+                           [6, 0, 4, 0, 0, 0],
+                           [6, 0, 0, 0, 0, 0],
+                           [0, 0, 0, 0, 3, 0]])
+    try:
+        np.testing.assert_array_equal(tested_out, wanted_out)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"Tested:\n{np.array2string(tested_out, separator=' ')}", file=sys.stderr)
+            print(f"Wanted:\n{np.array2string(wanted_out, separator=' ')}", file=sys.stderr)
+        raise
+    mat = np.array([[1, 2, 0, 0, 3, 0],
+                    [1, 0, 0, 4, 3, 0],
+                    [0, 0, 0, 0, 3, 0],
+                    [5, 0, 6, 0, 0, 0],
+                    [7, 5, 0, 0, 0, 0],
+                    [0, 0, 0, 8, 0, 0]])
+    dict_connected_labels = {1: 1, 2: 1, 3: 3, 4: 3, 5: 5, 6: 5, 7: 5, 8: 3}
+    tested_out = cc.connect_labels_in_matrix(mat, dict_connected_labels)
+    wanted_out = np.array([[1, 1, 0, 0, 3, 0],
+                           [1, 0, 0, 3, 3, 0],
+                           [0, 0, 0, 0, 3, 0],
+                           [5, 0, 5, 0, 0, 0],
+                           [5, 5, 0, 0, 0, 0],
+                           [0, 0, 0, 3, 0, 0]])
+    try:
+        np.testing.assert_array_equal(tested_out, wanted_out)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"Tested:\n{np.array2string(tested_out, separator=' ')}", file=sys.stderr)
+            print(f"Wanted:\n{np.array2string(wanted_out, separator=' ')}", file=sys.stderr)
+        raise
+    mat = np.array([[1, 0, 0, 2],
+                    [0, 0, 0, 0],
+                    [0, 0, 0, 0],
+                    [3, 0, 0, 4]])
+    dict_connected_labels = {1: 1, 2: 1, 3: 1, 4: 1}
+    tested_out = cc.connect_labels_in_matrix(mat, dict_connected_labels)
+    wanted_out = np.array([[1, 0, 0, 1],
+                           [0, 0, 0, 0],
+                           [0, 0, 0, 0],
+                           [1, 0, 0, 1]])
+    try:
+        np.testing.assert_array_equal(tested_out, wanted_out)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"Tested:\n{np.array2string(tested_out, separator=' ')}", file=sys.stderr)
+            print(f"Wanted:\n{np.array2string(wanted_out, separator=' ')}", file=sys.stderr)
+        raise
+
 def test_get_area_first_coor_defects():
     mat = np.array([[0, 0, 0, 0, 0, 0, 0],
                     [0, 1, 1, 0, 0, 3, 0],
@@ -130,7 +230,64 @@ def test_get_connected_components():
     wanted_out3 = {1:3, 2:5, 4:2, 5:1, 6:1}
     wanted_out4 = {1: [1,1], 2:[1,6], 4:[4,1], 5:[4,3], 6:[5,5]}
 
-    np.testing.assert_array_equal(tested_out1, wanted_out1)
+    try:
+        assert np.array_equal(tested_out1, wanted_out1)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"tested_out1:\n{np.array2string(tested_out1, separator=' ')}", file=sys.stderr)
+            print(f"wanted_out1:\n{np.array2string(wanted_out1, separator=' ')}", file=sys.stderr)
+        raise AssertionError("tested_out1 != wanted_out1")
+    assert tested_out2 == wanted_out2
+    assert tested_out3 == wanted_out3
+    assert tested_out4 == wanted_out4
+
+def test_get_connected_components_with_edge():
+    mat_labels = np.full((4,4),0)
+    mat = np.array([[0, 1, 1, 0],
+                    [1, 1, 1, 1],
+                    [1, 1, 1, 1],
+                    [0, 1, 1, 0]])
+    tested_out1, tested_out2, tested_out3, tested_out4 = cc.get_connected_components(mat, mat_labels)
+    wanted_out1 = np.array([[1, 0, 0, 2],
+                            [0, 0, 0, 0],
+                            [0, 0, 0, 0],
+                            [3, 0, 0, 4]])
+    wanted_out2 = [1, 2, 3, 4]
+    wanted_out3 = {1: 1, 2: 1, 3: 1, 4: 1}
+    wanted_out4 = {1: [0, 0], 2: [0, 3], 3: [3, 0], 4: [3, 3]}
+    try:
+        assert np.array_equal(tested_out1, wanted_out1)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"tested_out1:\n{np.array2string(tested_out1, separator=' ')}", file=sys.stderr)
+            print(f"wanted_out1:\n{np.array2string(wanted_out1, separator=' ')}", file=sys.stderr)
+        raise AssertionError("tested_out1 != wanted_out1")
+    assert tested_out2 == wanted_out2
+    assert tested_out3 == wanted_out3
+    assert tested_out4 == wanted_out4
+
+    mat_labels = np.full((5,5),0)
+    mat = np.array([[1, 1, 1, 1, 1],
+                    [1, 0, 1, 1, 0],
+                    [1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1],
+                    [1, 0, 1, 1, 0]])
+    tested_out1, tested_out2, tested_out3, tested_out4 = cc.get_connected_components(mat, mat_labels)
+    wanted_out1 = np.array([[0, 0, 0, 0, 0],
+                            [0, 1, 0, 0, 2],
+                            [0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0],
+                            [0, 3, 0, 0, 4]])
+    wanted_out2 = [1, 2, 3, 4]
+    wanted_out3 = {1: 1, 2: 1, 3: 1, 4: 1}
+    wanted_out4 = {1: [1, 1], 2: [1, 4], 3: [4, 1], 4: [4, 4]}
+    try:
+        assert np.array_equal(tested_out1, wanted_out1)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"tested_out1:\n{np.array2string(tested_out1, separator=' ')}", file=sys.stderr)
+            print(f"watned_out1:\n{np.array2string(wanted_out1, separator=' ')}", file=sys.stderr)
+        raise AssertionError("tested_out1 != wanted_out1")
     assert tested_out2 == wanted_out2
     assert tested_out3 == wanted_out3
     assert tested_out4 == wanted_out4

@@ -4,6 +4,7 @@
 # M. Zygadlo 2025
 
 import numpy as np
+import warnings
 
 
 def find_neighbours(mat: np.array, ind_i: int, ind_j: int) -> list:
@@ -26,23 +27,29 @@ def find_neighbours(mat: np.array, ind_i: int, ind_j: int) -> list:
     """
     defect_neighbours = []
     # Look for connectivity of the current cell
-    if ind_i > 0:
-        if (
-            ind_j > 0
-            and mat[(ind_i - 1) % mat.shape[0], (ind_j - 1) % mat.shape[1]] == 0
-        ):  # North-West
-            defect_neighbours.append(
-                [(ind_i - 1) % mat.shape[0], (ind_j - 1) % mat.shape[1]]
-            )
-        if mat[(ind_i - 1) % mat.shape[0], ind_j] == 0:  # North
-            defect_neighbours.append([(ind_i - 1) % mat.shape[0], ind_j])
-        if (
-            mat[(ind_i - 1) % mat.shape[0], (ind_j + 1) % mat.shape[1]] == 0
-        ):  # North-East
-            defect_neighbours.append(
-                [(ind_i - 1) % mat.shape[0], (ind_j + 1) % mat.shape[1]]
-            )
-    if ind_j > 0 and mat[ind_i, (ind_j - 1) % mat.shape[1]] == 0:  # West
+    #
+    #     ###
+    #     #c.
+    #     ...
+    if (
+        mat[(ind_i - 1) % mat.shape[0], (ind_j - 1) % mat.shape[1]] == 0
+    ):  # North-West
+        defect_neighbours.append(
+            [(ind_i - 1) % mat.shape[0], (ind_j - 1) % mat.shape[1]]
+        )
+    if (
+        mat[(ind_i - 1) % mat.shape[0], ind_j] == 0
+    ):  # North
+        defect_neighbours.append([(ind_i - 1) % mat.shape[0], ind_j])
+    if (
+        mat[(ind_i - 1) % mat.shape[0], (ind_j + 1) % mat.shape[1]] == 0
+    ):  # North-East
+        defect_neighbours.append(
+            [(ind_i - 1) % mat.shape[0], (ind_j + 1) % mat.shape[1]]
+        )
+    if (
+        mat[ind_i, (ind_j - 1) % mat.shape[1]] == 0
+    ):  # West
         defect_neighbours.append([ind_i, (ind_j - 1) % mat.shape[1]])
     return defect_neighbours
 
@@ -69,7 +76,9 @@ def find_label_neighbours(mat: np.array, defect_neighbours: list[list]) -> list:
         neighbour_i = neighbour[0]
         neighbour_j = neighbour[1]
         # Store their label in a list
-        label_neighbours.append(mat[neighbour_i, neighbour_j])
+        pos_label = mat[neighbour_i, neighbour_j]
+        if pos_label != 0:
+            label_neighbours.append(pos_label)
     # Eliminate duplicate & sort
     label_neighbours = list(set(label_neighbours))
     label_neighbours.sort()
@@ -272,7 +281,7 @@ def get_connected_components(
     mat: np.array, mat_labels: np.array
 ) -> tuple[np.array, list, dict, dict]:
     """
-    Connect and label the defects. Get a list of the labels, tehir area and ttheir first coordinates.
+    Connect and label the defects. Get a list of the labels, their area and their first coordinates.
 
     --------------------
     INPUT
@@ -296,12 +305,9 @@ def get_connected_components(
     equiv_labels = []
 
     # Find where there are defects
-    defect_X = np.where(mat == 0)[0]
-    defect_Y = np.where(mat == 0)[1]
-
-    for i in range(len(defect_X)):
-        indX = defect_X[i]
-        indY = defect_Y[i]
+    defects = np.where(mat == False)
+    for indX, indY in zip(*defects):
+        # indX is the slow counter (row_number), indY is the fast counter (column_number)
         # Create a list that contains the coordinates of the defect neighbours
         defect_neighbours = find_neighbours(mat, indX, indY)
 
@@ -313,13 +319,23 @@ def get_connected_components(
         if len(defect_neighbours) == 1:
             neighbour_i = defect_neighbours[0][0]
             neighbour_j = defect_neighbours[0][1]
-            mat_labels[indX, indY] = mat_labels[neighbour_i, neighbour_j]
+            pos_label = mat_labels[neighbour_i, neighbour_j]
+            if pos_label == 0:
+                nb_labels += 1
+                mat_labels[indX, indY] = nb_labels
+            else:
+                mat_labels[indX, indY] = pos_label
         # If the cell is inside a defect
         if len(defect_neighbours) > 1:
             # Find all the labels of the neighbours
             label_neighbours = find_label_neighbours(mat_labels, defect_neighbours)
             # assign the smallest label to that cell
-            mat_labels[indX][indY] = min(label_neighbours)
+            if len(label_neighbours) == 0:
+                nb_labels += 1
+                mat_labels[indX, indY] = nb_labels
+            else:
+                pos_label = min([x for x in label_neighbours if x])
+                mat_labels[indX, indY] = pos_label
 
             # In case of multiple labels
             if len(label_neighbours) > 1:
