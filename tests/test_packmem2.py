@@ -10,7 +10,8 @@ def test_packmem2(tmp_path):
     paramFile = "data/param_Charmm.txt"
     radiiFile = "data/vdw_radii_Charmm.txt"
     indexFile = None
-    output_dir = tmp_path
+    output_dir = "tests/data/edge_data"
+    #output_dir = tmp_path
     outputname = "POPC"
     dist_suppl_Z = 1.0
     protein = False

@@ -5,7 +5,6 @@
 # L. Roeleveld 2026
 
 import numpy as np
-import warnings
 
 
 def find_neighbours(mat: np.array, ind_i: int, ind_j: int) -> list:

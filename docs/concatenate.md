@@ -1,4 +1,4 @@
-# concatenate Documentation
+# `concatenate`
 
 This script concatenates packmem2 results. It reads the output .txt files and concatenates the date into 3 files file by defect type (Shallow / Deep / All).
 
@@ -14,18 +14,19 @@ The output comprises of multiple .csv file:
 
 ## Command line
 
-```
+```console
 concatenate -l [lipid name] -b [starting frame] -e [ending frame] -od [output directory] [-prot] [-h]
 ```
 
 ## Options
 
 Input options:
-- `-l` Prefix (usually the lipid name(s))\
-If multiple lipids, seperate them with `_`
-- `-b` Starting Frame number (Default: 0)
-- `-e` Ending Frame number 
-- `-prot` Protein in the simulation (Default: False)
+- `-p PATH`: directory containing the per-frame result files (required).
+- `-l PREFIX`: prefix of the PackMem2 output file names (required).
+- `-b FRAME`: first frame. Default: `0`.
+- `-e FRAME`: last frame (required).
+- `-prot`: concatenate protein result files.
+- `-keep`: keep the per-frame files after concatenation.
 
-Ouput options:
-- `-od` Output directory (Default: ./)
+Output options:
+- `-od DIRECTORY`: output directory. Default: `./`.

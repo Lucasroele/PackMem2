@@ -1,37 +1,41 @@
-# Launch_packmem2 Documentation
+# `launch_packmem2`
 
-This script runs the PackMem2 script, then the concatenation one and finaly, the analysis script.
+`launch_packmem2` runs the PackMem2 analysis, concatenates the per-frame
+results, and generates the final analysis plots.
 
-The complete options for launch_packmem2 are:
-```
-launch_packmem2 -f [trajectory] -s [structure] -l [lipid name] -b [starting frame] -e [ending frame] -r [radii file] -p [parameter file] -c [core number] -d [distance in z] -n [index file] -prec [precision wanted] -lx [limit in x] -ly [limit in y] -o [output name] -od [output directory] [-prot] [-pdb] [-h]
+## Usage
+
+```console
+launch_packmem2 -f TRAJECTORY -s STRUCTURE -l LIPID [options]
 ```
 
 ## Options
 
-Input files options:
-- `-f` Trajectory file [.xtc/.trr/...]
-- `-s` topology file [.gro/...]
-- `-r` Van der Waals radii file (Default: `data/vdw_radii_Charmm.txt`)\
-Other options are: `data/vdw_radii_Martini_old.txt`, `data/vdw_radii_Martini2.txt`, `data/vdw_radii_Martini2P.txt`, `data/vdw_radii_Martini3.txt`
-- `-p` Parameter file (Default: `data/param_Charmm.txt`)\
-Other option is: `data/param_Martini.txt`
-- `-n` Index file (Optional)\
-Index to the upper and lower leaflet
+### Input files
 
-Input options:
-- `-l` Lipid name(s)\
-If multiple lipids, seperate them with `_`
-- `-b` Starting Frame number (Default: 0)
-- `-e` Ending Frame number 
-- `-c` Number of cores given for the analysis (Default: maximum cores on the computer - 2) 
-- `-d` Distance to differenciate Deep from Shallow defects in Angstrom (Default: 1.0)
-- `-prec` Precision for defect constants in the output (Default: 2)
-- `-lx` Lowest defect area considered for the fit (Default: 15)
-- `-ly` Lowest probability considered for the fit (Default: 1e-4)
-- `-prot` Protein in the simulation (Default: False)
-- `-pdb` Create .pdb output (Default: False)
+- `-f TRAJECTORY`: trajectory file, such as `.xtc` or `.trr` (required).
+- `-s STRUCTURE`: topology file, such as `.gro` (required).
+- `-r RADII_FILE`: van der Waals radii file. Default: `data/vdw_radii_Charmm.txt`.
+- `-p PARAMETER_FILE`: lipid parameter file. Default: `data/param_Charmm.txt`.
+- `-n INDEX_FILE`: optional GROMACS index file containing the upper and lower leaflets.
 
-Ouput options:
-- `-o` Output name (Default: output)
-- `-od` Output directory (Default: ./)
+### Analysis settings
+
+- `-l LIPID`: lipid name, or multiple names separated with `_` (required).
+- `-b FRAME`: first frame. Default: `0`.
+- `-e FRAME`: last frame (required).
+- `-c CORES`: number of processes. Default: the number of available CPUs minus two.
+- `-d DISTANCE`: distance separating deep and shallow defects in Angstroms. Default: `1.0`.
+- `-nb BLOCKS`: number of blocks for block averaging. Default: `3`.
+- `-prec DIGITS`: number of decimal places in the output. Default: `2`.
+- `-lx AREA`: minimum defect area used for fitting. Default: `15`.
+- `-ly PROBABILITY`: minimum probability used for fitting. Default: `1e-4`.
+- `--wrapped`: assume trajectory coordinates are already wrapped. This is the default.
+- `--no-wrapped`: wrap trajectory coordinates before analysis.
+- `-prot`: analyze defects near a protein.
+- `-pdb`: create PDB output files.
+
+### Output
+
+- `-o NAME`: output name. Default: `output`.
+- `-od DIRECTORY`: output directory. Default: `./`.

@@ -15,7 +15,7 @@ def test_outputTXT_defects(tmp_path):
 
     with open(f"{tmp_path}/output.txt", 'r') as file_test:
         content = file_test.readlines()
-    wanted_lines = ["## MatrixSize     1     4 \n",
+    wanted_lines = ["## MatrixSize     4 \n",
                     "## Total    1     1 1.00 100.000\n",
                     "  1    1     0.00    -2.00 \n"]
     assert content == wanted_lines

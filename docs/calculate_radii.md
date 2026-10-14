@@ -1,4 +1,4 @@
-# calculate_radii Documentation
+# `calculate_radii`
 
 This script computes the van der Waals radii from .itp files.
 
@@ -10,22 +10,24 @@ The output is given in the terminal:
 ## Command line
 
 The complete options for analysis are:
-```
+```console
 calculate_radii -mol [molecule file] -ff [forcefield file] -o [output name] [-martini] [-martini3] [-h]
 ```
 
 ## Options
 
+## Options
+
 Input files options:
-- `-mol` molecule parameter file [.itp]
-- `-ff` forcefield paramter file [.itp]
+- `-mol MOLECULE_FILE`: molecule parameter file (`.itp`).
+- `-ff FORCEFIELD_FILE`: force-field parameter file (`.itp`).
 
 Input options:
-- `-martini` Compute the radius with MARTINI information (Default: False)
-- `-martini3` Compute the radius with MARTINI3 information (Default: False)
+- `-martini`: compute radii using MARTINI information.
+- `-martini3`: compute radii using MARTINI 3 information.
 
-Ouput options:
-- `-o` Output name (Default: vdw_out)
+Output options:
+- `-o NAME`: output name. Default: `vdw_out`.
 
 ## Trouble shooting
 

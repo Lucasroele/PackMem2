@@ -1,6 +1,7 @@
 [pytest]
 addopts = ["--strict-markers"]
 markers = [
+    "slow: slow integration tests that are nice to skip",
     "slowest: slowest tests that should not run in CI",
 ]
 filterwarnings = [

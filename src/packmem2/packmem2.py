@@ -45,7 +45,7 @@ def launch(
 
     Output files:
         outputname_Up/Lo_Shallow/Deep/All_result.txt
-        ## MatrixSize  9646  9801         # Membrane matrix size, Total matrix size
+        ## MatrixSize  9801
         ## Total   51   582 11.41 6.034   # number of packing defects, total area of packing defects, average size, pourcent of membrane (Membrane matrix size)
         1    1    77.00     2.00          # for each packing defect num size x_position (first pixel) y_mean (first pixel)
         2    1    21.00     3.00
@@ -652,13 +652,13 @@ def launch(
                 coor_prot_edgesLo_Shallow = prot.find_edges(MatrixLo_prot_Shallow)[1]
                 coor_prot_edgesLo_All = prot.find_edges(MatrixLo_prot_All)[1]
 
-                DefectsLo_labels_group_Deep = prot.assign_dist_group(
+                DefectsLo_labels_group_Deep: dict = prot.assign_dist_group(
                     coor_prot_edgesLo_Deep, coor_label_edgesLo_Deep, 100
                 )
-                DefectsLo_labels_group_Shallow = prot.assign_dist_group(
+                DefectsLo_labels_group_Shallow: dict = prot.assign_dist_group(
                     coor_prot_edgesLo_Shallow, coor_label_edgesLo_Shallow, 100
                 )
-                DefectsLo_labels_group_All = prot.assign_dist_group(
+                DefectsLo_labels_group_All: dict = prot.assign_dist_group(
                     coor_prot_edgesLo_All, coor_label_edgesLo_All, 100
                 )
 
