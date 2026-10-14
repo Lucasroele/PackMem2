@@ -23,48 +23,53 @@ def test_find_X_Y():
     assert(tested_ouputX == wanted_outputX)
     assert(tested_ouputY == wanted_outputY)
 
+#def test_fill_matrix(): 
+#    listX = np.arange(-1., 6., 1) 
+#    listY = np.arange(-1., 6., 1) 
+#    Matrix = np.full((len(listX), len(listY)), 0.0) 
+#    tested_ouput = m.fill_matrix(Matrix, 1.34, 'a', [0, 4, 2], listX, listY, np.array([4, 3, 2, 1, 0])) 
+#    wanted_output = np.array([[0.0, 0.0, 0.0, 0.0,   0.001, 0.001, 0.001], 
+#                              [0.0, 0.0, 0.0, 0.001, 0.001, 0.001, 0.001], 
+#                              [0.0, 0.0, 0.0, 0.0,   0.001, 0.001, 0.001], 
+#                              [0.0, 0.0, 0.0, 0.0,   0.0,   0.001, 0.0], 
+#                              [0.0, 0.0, 0.0, 0.0,   0.0,   0.0,   0.0], 
+#                              [0.0, 0.0, 0.0, 0.0,   0.0,   0.0,   0.0], 
+#                              [0.0, 0.0, 0.0, 0.0,   0.0,   0.0,   0.0]]) 
+#    np.testing.assert_array_equal(tested_ouput, wanted_output) 
 
-#def test_fill_matrix():
-#    listX = np.arange(-1., 6., 1)
-#    listY = np.arange(-1., 6., 1)
-#    Matrix = np.full((len(listX), len(listY)), 0.0)
-#    tested_output = m.fill_matrix(Matrix, 1.34, 'a', [0, 4, 2], listX, listY, np.array([4, 3, 2, 1, 0]))
-#    wanted_output = np.array([[0.0, 0.0, 0.0, 0.0, 0.001, 0.001, 0.001],
-#                              [0.0, 0.0, 0.0, 0.001, 0.001, 0.001, 0.001],
-#                              [0.0, 0.0, 0.0, 0.0, 0.001, 0.001, 0.001],
-#                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.0],
-#                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-#                              [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
-#    print(f"Test failed: ", file=sys.stderr)
-#    print(tested_output, file=sys.stderr)
-#    try:
-#        np.testing.assert_array_equal(tested_ouput, wanted_output)
-#    except AssertionError as e:
-#        print(f"Test failed: {e}", file=sys.stderr)
-#        print(tested_output, file=sys.stderr)
-#        raise
-#    assert tested_ouput.dtype == bool
-#    np.testing.assert_array_equal(tested_ouput, wanted_output)
-
-
-def test_fill_matrix():
-    listX = np.arange(-1., 6., 1)
-    listY = np.arange(-1., 6., 1)
+def test_fill_matrix_with_edge():
+    listX = np.arange(0., 5., 1)
+    listY = np.arange(0., 5., 1)
     Matrix = np.full((len(listX), len(listY)), 0.0)
     tested_output = m.fill_matrix(Matrix, 1.34, 'a', [0, 4, 2], listX, listY, np.array([4, 3, 2, 1, 0]))
-    wanted_output = np.array([[0,     0,    0,     0,     0.001, 0.001, 0.001],
-                              [0.001, 0,    0,     0.001, 0.001, 0.001, 0.001],
-                              [0,     0,    0,     0,     0.001, 0.001, 0.001],
-                              [0,     0,    0,     0,     0,     0.001, 0,   ],
-                              [0,     0,    0,     0,     0,     0,     0,   ],
-                              [0,     0,    0,     0,     0,     0,     0,   ],
-                              [0,     0,    0,     0,     0,     0.001, 0,   ]])
+    wanted_output = np.array([[0.001, 0.001,  0.001, 0.001, 0.001],
+                              [0.001, 0,      0,     0.001, 0.001],
+                              [0,     0,      0,     0,     0.001],
+                              [0,     0,      0,     0,     0.001],
+                              [0.001, 0,      0,     0.001, 0.001]])
     try:
         np.testing.assert_array_equal(tested_output, wanted_output)
-    except AssertionError as e:
-        print(f"Test failed: {e}", file=sys.stderr)
-        print(tested_output, file=sys.stderr)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"Tested:\n{np.array2string(tested_output, separator=' ')}", file=sys.stderr)
+            print(f"Wanted:\n{np.array2string(wanted_output, separator=' ')}", file=sys.stderr)
+        raise
+    listX = np.arange(0., 6., 1)
+    listY = np.arange(0., 6., 1)
+    Matrix = np.full((len(listX), len(listY)), 0.0)
+    tested_output = m.fill_matrix(Matrix, 1.34, 'a', [0, 4, 2], listX, listY, np.array([4, 3, 2, 1, 0]))
+    wanted_output = np.array([[0.001,  0,     0.001,  0.001, 0.001, 0.001, ],
+                              [0,      0,     0,      0.001, 0.001, 0.001, ],
+                              [0,      0,     0,      0,     0.001, 0,     ],
+                              [0,      0,     0,      0,     0,     0,     ],
+                              [0,      0,     0,      0,     0.001, 0,     ],
+                              [0,      0,     0,      0.001, 0.001, 0.001, ]])
+    try:
+        np.testing.assert_array_equal(tested_output, wanted_output)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"Tested:\n{np.array2string(tested_output, separator=' ')}", file=sys.stderr)
+            print(f"Wanted:\n{np.array2string(wanted_output, separator=' ')}", file=sys.stderr)
         raise
 
 

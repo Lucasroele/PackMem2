@@ -102,7 +102,14 @@ def build_args() -> argparse.Namespace:
         action="store_true",
         help="Analyse the packing defects close/far of the protein",
     )
-
+    parser.add_argument(
+    "--wrapped",
+    dest="wrapped",
+    action=argparse.BooleanOptionalAction,
+    default=True,
+    help="Trajectory coordinates are already wrapped into the box. "
+         "Use --no-wrapped if they are unwrapped and need wrapping first.",
+    )
     return parser
 
 

@@ -1,6 +1,7 @@
 """Functions to create, analyse list variables."""
 # R. Gautier 2015
 # M. Zygadlo 2025
+# L. Roeleveld 2026
 
 import numpy as np
 from MDAnalysis import ResidueGroup
@@ -77,7 +78,7 @@ def min_max(data: np.array) -> tuple[float, float]:
     return mini, maxi
     
 
-def create_array(v1: float, v2: float, step: float) -> np.array:
+def create_array(v1: float, v2: float, step: float) -> np.ndarray:
     """
     Create numpy array from v1 to v2 by step step.
 

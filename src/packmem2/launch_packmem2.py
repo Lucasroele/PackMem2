@@ -5,7 +5,6 @@ import packmem2.packmem2
 import packmem2.concatenate
 import packmem2.analysis
 
-
 def launch(
     cores: int,
     topo: str,
@@ -25,6 +24,7 @@ def launch(
     limy: float,
     precision: int,
     nb_block: int,
+    wrapped: bool,
 ) -> None:
     """
     Launch the different python scripts for PackMem2
@@ -60,6 +60,7 @@ def launch(
                 dist_suppl_Z,
                 protein,
                 pdbout,
+                wrapped,
             ),
         )
         p.start()
@@ -98,7 +99,8 @@ def main() -> None:
         args.limx,
         args.limy,
         args.precision,
-        args.nb_block
+        args.nb_block,
+        args.wrapped,
     )
 
 

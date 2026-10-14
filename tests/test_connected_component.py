@@ -248,13 +248,37 @@ def test_get_connected_components_with_edge():
                     [1, 1, 1, 1],
                     [0, 1, 1, 0]])
     tested_out1, tested_out2, tested_out3, tested_out4 = cc.get_connected_components(mat, mat_labels)
-    wanted_out1 = np.array([[1, 0, 0, 2],
+    wanted_out1 = np.array([[1, 0, 0, 1],
                             [0, 0, 0, 0],
                             [0, 0, 0, 0],
-                            [3, 0, 0, 4]])
-    wanted_out2 = [1, 2, 3, 4]
-    wanted_out3 = {1: 1, 2: 1, 3: 1, 4: 1}
-    wanted_out4 = {1: [0, 0], 2: [0, 3], 3: [3, 0], 4: [3, 3]}
+                            [1, 0, 0, 1]])
+    wanted_out2 = [1]
+    wanted_out3 = {1: 4}
+    wanted_out4 = {1: [0, 0]}
+    try:
+        assert np.array_equal(tested_out1, wanted_out1)
+    except AssertionError:
+        with np.printoptions(threshold=np.inf, linewidth=200):
+            print(f"tested_out1:\n{np.array2string(tested_out1, separator=' ')}", file=sys.stderr)
+            print(f"wanted_out1:\n{np.array2string(wanted_out1, separator=' ')}", file=sys.stderr)
+        raise AssertionError("tested_out1 != wanted_out1")
+    assert tested_out2 == wanted_out2
+    assert tested_out3 == wanted_out3
+    assert tested_out4 == wanted_out4
+
+    mat_labels = np.full((4,4),0)
+    mat = np.array([[0, 1, 1, 0],
+                    [1, 1, 1, 1],
+                    [1, 1, 0, 1],
+                    [1, 0, 1, 1]])
+    tested_out1, tested_out2, tested_out3, tested_out4 = cc.get_connected_components(mat, mat_labels)
+    wanted_out1 = np.array([[1, 0, 0, 1],
+                            [0, 0, 0, 0],
+                            [0, 0, 1, 0],
+                            [0, 1, 0, 0]])
+    wanted_out2 = [1]
+    wanted_out3 = {1: 4}
+    wanted_out4 = {1: [0, 0]}
     try:
         assert np.array_equal(tested_out1, wanted_out1)
     except AssertionError:
@@ -302,4 +326,16 @@ def test_get_edge_defects():
                     [0, 0, 0, 1, 0, 0, 0, 8]])
     tested_out = cc.get_edge_defects(mat)
     wanted_out = [1, 8]
-    assert tested_out == wanted_out    
+    assert tested_out == wanted_out   
+
+def test_get_edge_defects_with_edge():
+    mat = np.array([[2, 2, 0, 0, 0, 3, 0],
+                    [2, 0, 0, 3, 3, 3, 0],
+                    [0, 0, 0, 0, 3, 0, 0],
+                    [5, 0, 6, 0, 0, 0, 8],
+                    [5, 0, 0, 0, 7, 0, 8],
+                    [0, 0, 1, 0, 0, 0, 8]])
+    tested_out = cc.get_edge_defects(mat)
+    wanted_out = [1, 2, 3, 5, 8]
+    assert tested_out == wanted_out
+

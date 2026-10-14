@@ -1,14 +1,15 @@
 """Funtions for matrix."""
 # R. Gautier A. Bacle 2015
 # M. Zygadlo 2025
+# L. Roeleveld 2026
 
 import math
 from packmem2.core import arrays as a
 import numpy as np
-from packmem2.core.constants import MAX_GRID_SEARCH_CELLS, SIZE, SIZE_SIDE
+from packmem2.core.constants import MAX_GRID_SEARCH_CELLS, SIZE
 
 
-def initialize_matrix2D(val1: int, val2: int, default: int | float | str) -> np.array:
+def initialize_matrix2D(val1: int, val2: int, default: int | float | str) -> np.ndarray:
     """
     Initialise a 2D matrix with a default value.
 
@@ -49,76 +50,76 @@ def diff_Z(arrayZ: np.array, coordZ: float) -> float:
     """
     return arrayZ[-1] - coordZ
 
+# find_X_Y
+if float(SIZE) == 1.000:
+    def find_X_Y(coord: np.array, matX: np.array, matY: np.array) -> tuple[int, int]:
+        """
+        Determine from x,y coordinates the index in matX and matY.
 
-def find_X_Y(coord: np.array, matX: np.array, matY: np.array) -> tuple[int, int]:
-    """
-    Determine from x,y coordinates the index in matX and matY.
+        Has been said to determine the central value in matrix
 
-    Has been said to determine the central value in matrix
+        --------------------
+        INPUT
+        coord: numpy array
+            Contains the coordinates x,y,z of an atom
+        matX: numpy array
+            Contains integer from xmin-1 to xmax+1 by step of 1.0
+        matY: numpy array
+            Contains integer from ymin-1 to ymax+1 by step of 1.0
 
-    --------------------
-    INPUT
-    coord: numpy array
-        Contains the coordinates x,y,z of an atom
-    matX: numpy array
-        Contains integer from xmin-1 to xmax+1 by step of 1.0
-    matY: numpy array
-        Contains integer from ymin-1 to ymax+1 by step of 1.0
+        --------------------
+        OUTPUT
+        tuple of int
+            the index of the coord x and y of the atom in matX and matY
+        """
+        # Convert to integer
+        tmpX = int(coord[0]) % len(matX)
+        tmpY = int(coord[1]) % len(matY)
+        # Find the index of the value given (x_atom or y_atom)
+        iX = np.where(matX == tmpX)[0][0]
+        iY = np.where(matY == tmpY)[0][0]
+        return iX, iY
+else:
+    def find_X_Y(coord: np.ndarray, matX: np.ndarray, matY: np.ndarray) -> tuple[int, int]:
+        """
+        Determine from x,y coordinates the index in matX and matY.
 
-    --------------------
-    OUTPUT
-    tuple of int
-        the index of the coord x and y of the atom in matX and matY
-    """
-    # Convert to integer
-    if float(SIZE) != 1.000:
-        tmpX = int(coord[0] / float(SIZE))
-        tmpY = int(coord[1] / float(SIZE))
-    else:
-        tmpX = int(coord[0])
-        tmpY = int(coord[1])
-    # Find the index of the value given (x_atom or y_atom)
-    iX = np.where(matX == tmpX)[0][0]
-    iY = np.where(matY == tmpY)[0][0]
-    return iX, iY
+        Has been said to determine the central value in matrix
 
+        --------------------
+        INPUT
+        coord: numpy array
+            Contains the coordinates x,y,z of an atom
+        matX: numpy array
+            Contains integer from xmin-1 to xmax+1 by step of 1.0
+        matY: numpy array
+            Contains integer from ymin-1 to ymax+1 by step of 1.0
 
-#def check_edges(val: int, val_lim1: int, val_lim2: int) -> int:
-#    """
-#    Check if the cell index is lower than val_lim1 or higher than val_lim2. Changes the value of the cell index if so.
-#
-#    --------------------
-#    INPUT
-#    val: int
-#        Index of the coordinate of the atom in listX or listY
-#    val_lim1: int
-#        The number of cell to work around the atom
-#    val_lim2: int
-#        The length of listX or listY
-#
-#    --------------------
-#    OUTPUT
-#    int
-#        The cell index that represents the center of the search
-#    """
-#    if val < val_lim1:
-#        return val_lim1
-#    elif val >= val_lim2 - val_lim1:
-#        return val_lim2 - (val_lim1 + 1)
-#    else:
-#        return val
+        --------------------
+        OUTPUT
+        tuple of int
+            the index of the coord x and y of the atom in matX and matY
+        """
+        # Convert to integer
+        fl_SIZE = float(SIZE)
+        tmpX = (int(coord[0] / fl_SIZE) * fl_SIZE) % (len(matX) * fl_SIZE)
+        tmpY = (int(coord[1] / fl_SIZE) * fl_SIZE) % (len(matY) * fl_SIZE)
+        # Find the index of the value given (x_atom or y_atom)
+        iX = np.where(matX == tmpX)[0][0]
+        iY = np.where(matY == tmpY)[0][0]
+        return iX, iY
 
 
 # This is used once for each leaflet
 def fill_matrix(
-    mat: np.array,
+    mat: np.ndarray,
     radius_atm: float,
     aliph_atom: str,
-    coordtmp: np.array,
-    arrayX: np.array,
-    arrayY: np.array,
-    arrayZ: np.array,
-) -> np.array:
+    coordtmp: np.ndarray,
+    arrayX: np.ndarray,
+    arrayY: np.ndarray,
+    arrayZ: np.ndarray,
+) -> np.ndarray:
     """
     Fill the matrix depending on the atom type.
 
@@ -148,52 +149,51 @@ def fill_matrix(
         > 1 if polar
         0 if it's a defect
     """
-    # Number of cells to work around
     x_len: int = len(arrayX)
     y_len: int = len(arrayY)
+    # Number of cells to work around
     v: int = min(MAX_GRID_SEARCH_CELLS, x_len // 2, y_len // 2)
     # Limit distance to roughly select the cells that are near the atom+radius
-    sqrtdist_lim = (SIZE + radius_atm) ** 2
+    sqrddist_lim = (SIZE + radius_atm) ** 2
     # Limit distance to select the cells that intersect the atom+radius
-    sqrtdist_meet = (SIZE_SIDE + radius_atm) ** 2
+    size_side = 0.5 * math.sqrt(SIZE**2 * 3.0)
+    sqrddist_meet = (size_side + radius_atm) ** 2
     # Find the equivalent index in the matrix of the x,y positions
     iX, iY = find_X_Y(coordtmp, arrayX, arrayY)
-    # Change if too close to the edge
     # Select the cells to work in at i+-v (to not spend too much time on useless cells)
-    if iX + 1 < v:
-        Xind = np.concatenate([np.arange(x_len - (v - iX) + 1, x_len), np.arange(0, iX + v + 2)])
-    elif iX + 1 >= x_len - v:
-        Xind = np.concatenate([np.arange(iX - v + 1, x_len), np.arange(0, v - (x_len - iX) + 2)])
+    # Xind: np.ndarray[int]
+    # Yind: np.ndarray[int]
+    if iX < v:
+        Xind = np.concatenate([np.arange(x_len - (v - iX), x_len), np.arange(0, iX + v + 1)])
+    elif iX >= x_len - v:
+        Xind = np.concatenate([np.arange(iX - v, x_len), np.arange(0, v - (x_len - iX) + 1)])
     else:
-        Xind = np.arange(iX - v + 1, iX + v + 2)
+        Xind = np.arange(iX - v, iX + v + 1)
     assert len(Xind) == 2 * v + 1
     gridX = a.create_array(iX - v * SIZE, iX + (v+1) * SIZE, SIZE)
     assert len(gridX) == 2 * v + 1
-    if iY + 1 < v:
-        Yind = np.concatenate([np.arange(y_len - (v - iY) + 1, y_len), np.arange(0, iY + v + 2)])
-    elif iY + 1 >= y_len - v:
-        Yind = np.concatenate([np.arange(iY - v + 1, y_len), np.arange(0, v - (y_len - iY) + 2)])
+    if iY < v:
+        Yind = np.concatenate([np.arange(y_len - (v - iY), y_len), np.arange(0, iY + v + 1)])
+    elif iY >= y_len - v:
+        Yind = np.concatenate([np.arange(iY - v, y_len), np.arange(0, v - (y_len - iY) + 1)])
     else:
-        Yind = np.arange(iY - v + 1, iY + v + 2)
+        Yind = np.arange(iY - v, iY + v + 1)
     assert len(Yind) == 2 * v + 1
     gridY = a.create_array(iY - v * SIZE, iY + (v+1) * SIZE, SIZE)
     assert len(gridY) == 2 * v + 1
     # Find the closest distance in Z
-    sqrtdZ_min = np.min((arrayZ - coordtmp[2]) ** 2)
-    if sqrtdZ_min > sqrtdist_lim:  # no close Z found
+    sqrdZ_min = np.min((arrayZ - coordtmp[2]) ** 2)
+    if sqrdZ_min > sqrddist_lim:  # no close Z found
         return mat
 
     # Get all the pair of x,y possible around the atom
     # This need to yield x and y acrross the pbc
     Xg, Yg = np.meshgrid(gridX, gridY, indexing="ij")
 
-    sqrt_distances = (Xg - coordtmp[0]) ** 2 + (Yg - coordtmp[1]) ** 2
+    sqrd_distances = (Xg - coordtmp[0]) ** 2 + (Yg - coordtmp[1]) ** 2
     # Get the distances that are in the effective radius of the atom
-    mask = sqrt_distances <= sqrtdist_meet - sqrtdZ_min
-
+    mask = sqrd_distances <= sqrddist_meet - sqrdZ_min
     # Convert the indexes to get the location in the matrix (global index) and not in the sublist (local)
-    #Xind = np.arange(iX - v, iX + v + 1)
-    #Yind = np.arange(iY - v, iY + v + 1)
     # Put the indexes that are in the effective radius (local) to be globalised to the matrix length
     X_idx, Y_idx = np.where(mask)  # local
     X_idx = Xind[X_idx]  # Get to global
@@ -209,8 +209,8 @@ def fill_matrix(
 
 
 def binarize_matrix_without0(
-    mat: np.array, val1: float = 0.0, val2: float = 0.99
-) -> np.array:
+    mat: np.ndarray, val1: float = 0.0, val2: float = 0.99
+) -> np.ndarray:
     """
     Binarise the presence / absence of aliphatic atom (and packing defects) in matrix.
 

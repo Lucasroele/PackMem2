@@ -2,6 +2,7 @@
 ##### Source: http://en.wikipedia.org/wiki/Connected-component_labeling
 # P. Fuchs 08/2014
 # M. Zygadlo 2025
+# L. Roeleveld 2026
 
 import numpy as np
 import warnings
@@ -148,6 +149,27 @@ def merge_list_of_lists(list_of_lists: list[list]) -> list[list]:
     return list_of_lists
 
 
+def add_equivalent_labels(
+    equiv_labels: list[list], label_neighbours: list, current_label: int | None = None
+) -> list[list]:
+    if not equiv_labels:
+        if current_label is not None:
+            label_neighbours = list(set(label_neighbours) | {current_label})
+        equiv_labels.append(label_neighbours)
+        return equiv_labels
+
+    is_present_in_equiv_labels = False
+    for k, tmplist in enumerate(equiv_labels):
+        if intersect(tmplist, label_neighbours):
+            equiv_labels[k] = sort_without_duplicate_merged_lists(
+                equiv_labels[k], label_neighbours
+            )
+            is_present_in_equiv_labels = True
+    if not is_present_in_equiv_labels:
+        equiv_labels.append(label_neighbours)
+    return equiv_labels
+
+
 def get_uniq_labels(nb_labels: int, equiv_labels: list[list]) -> tuple[dict, list]:
     """
     Build a dictionnary for assigning a uniq label.
@@ -263,16 +285,15 @@ def get_area_first_coor_defects(mat: np.array, uniq_labels: list) -> tuple[dict,
     """
     area_defects = {}
     first_coor_defects = {}
-
+    assert len(uniq_labels) == len(set(uniq_labels)), "uniq_labels should not contain duplicates"
     for label in uniq_labels:
         # Get the positions of this label
         label_X = np.where(mat == label)[0]
         label_Y = np.where(mat == label)[1]
         # Add the surface they cover to area_defects
-        if label not in area_defects:
-            area_defects[label] = 0
-            # Take the first occurence as reference coordinates
-            first_coor_defects[label] = [label_X[0], label_Y[0]]
+        area_defects[label] = 0
+        # Take the first occurence as reference coordinates
+        first_coor_defects[label] = [label_X[0], label_Y[0]]
         area_defects[label] += len(label_X)
     return area_defects, first_coor_defects
 
@@ -339,29 +360,23 @@ def get_connected_components(
 
             # In case of multiple labels
             if len(label_neighbours) > 1:
-                if len(equiv_labels) == 0:
-                    equiv_labels.append(label_neighbours)
-                else:
-                    is_present_in_equiv_labels = False
-                    for k, tmplist in enumerate(equiv_labels):
-                        # If one the labels already is in equiv_labels
-                        if intersect(tmplist, label_neighbours):
-                            # Fuse the lists, avoid duplicates and sort
-                            equiv_labels[k] = sort_without_duplicate_merged_lists(
-                                equiv_labels[k], label_neighbours
-                            )
-                            is_present_in_equiv_labels = True
-                    # If the labels don't exist in equiv_labels
-                    if not is_present_in_equiv_labels:
-                        equiv_labels.append(label_neighbours)
+                equiv_labels = add_equivalent_labels(equiv_labels, label_neighbours)
 
-    # If there are redundancies, clean them up
-    equiv_labels = merge_list_of_lists(equiv_labels)
+    # rerun the label connection for the defects that are on the edge of the matrix
+    boundary_defects = (defects[0] == 0) | (defects[1] == 0)
+    for indX, indY in zip(defects[0][boundary_defects], defects[1][boundary_defects]):
+        defect_neighbours = find_neighbours(mat, indX, indY)
+        if len(defect_neighbours) > 1:
+            label_neighbours = find_label_neighbours(mat_labels, defect_neighbours)
+            equiv_labels = add_equivalent_labels(
+                equiv_labels, label_neighbours, int(mat_labels[indX, indY])
+            )
+        # If there are redundancies, clean them up
+        equiv_labels = merge_list_of_lists(equiv_labels)
 
     # Get the labels to be linked to their smallest equivalent label
     # Get the list of the unique values in the dictionary
     dict_connected_labels, uniq_labels = get_uniq_labels(nb_labels, equiv_labels)
-
     # Change the labels in the matrix to the smallest one
     mat_labels = connect_labels_in_matrix(mat_labels, dict_connected_labels)
 

@@ -24,6 +24,7 @@ def test_launch_DMPC(tmp_path):
     limy = 1e-4
     precision = 3
     nb_block = 5
+    wrapped = True
 
     launch_packmem2.launch(
         cores,
@@ -43,7 +44,8 @@ def test_launch_DMPC(tmp_path):
         limx,
         limy,
         precision,
-        nb_block
+        nb_block,
+        wrapped
     )
 
     # Check Total files
@@ -203,6 +205,7 @@ def test_launch_DLPC(tmp_path):
     assert expected_final_summary.exists()
 
 
+@pytest.mark.slowest
 def test_launch_DLPC_multiprocess(tmp_path):
     """DLPC (Martini) multiprocess"""
     cores = 4
@@ -215,6 +218,7 @@ def test_launch_DLPC_multiprocess(tmp_path):
     radiiFile = "data/vdw_radii_Martini_old.txt"
     indexFile = None
     output_dir = str(tmp_path)
+    #output_dir = "tests/data/dlpc_multi_bigger_arrays"
     outputname = "DLPC"
     dist_suppl_Z = 1.0
     protein = False

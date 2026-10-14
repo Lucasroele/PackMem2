@@ -1,7 +1,16 @@
-Added wrapping
+Labelling happens accross edges
 
-`connected_components.get_connected_components()` respects edges
+`connected_components.connect_labels_in_matrix()` connects labels accross edges
 
-`cc.find_label_neighbors()` respects edges
+All tests inside `test_launch_packmem2.py` fail.
+    The new algorithm finds more defects since `matrix.fill_matrix()` no longer uses
+    shifted indices produced by `matrix.check_edges()`.
 
-These could be factored into seperate functions to skip conditional logic inside the functions
+The core logic of raidus-cell overlap is not defined rigorously anywhere.
+The last row/column of cells expands beyond the box. The fixed cell size grid makes it
+impossible to align the two. Defects at the edge are therefore ill defined and assigned.
+If the box size varies sufficiently accross frames this effect is averaged out.
+
+Another approach is to skip the periodic image interaction and use a grid that is
+`MAX_GRID_SEARCH_CELLS` smaller than the box border on all sides. Defect size is best
+estimated using periodic images however.
