@@ -23,7 +23,7 @@ launch_packmem2 -f TRAJECTORY -s STRUCTURE -l LIPID [options]
 
 - `-l LIPID`: lipid name, or multiple names separated with `_` (required).
 - `-b FRAME`: first frame. Default: `0`.
-- `-e FRAME`: last frame (required).
+- `-e FRAME`: last frame.
 - `-c CORES`: number of processes. Default: the number of available CPUs minus two.
 - `-d DISTANCE`: distance separating deep and shallow defects in Angstroms. Default: `1.0`.
 - `-nb BLOCKS`: number of blocks for block averaging. Default: `3`.

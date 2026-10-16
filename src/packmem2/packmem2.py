@@ -7,6 +7,7 @@
 import sys
 import time
 import warnings
+
 import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.analysis.leaflet import LeafletFinder
@@ -19,7 +20,9 @@ from packmem2.core import connected_component as cc
 from packmem2.core import dict as d
 from packmem2.core import param as p
 from packmem2.core import protein as prot
-from packmem2.core.constants import DECIMALS, MAX_Z_DISTANCE, SIZE, LEGACY
+from packmem2.core.constants import DECIMALS, MAX_Z_DISTANCE, SIZE
+
+_progress_queue = None
 
 ##########################################################################################
 def launch(
@@ -75,7 +78,7 @@ def launch(
             2,far,3
             3,close,6
     """
-    start_time = time.time()
+    
     ######### READ PARAM FILES #########
     # RESNAME_GLYC = {'DOP': 'C2', 'DOE': 'C2', 'DPP': 'C2', etc}
     RESNAME_GLYC = p.set_params(paramFile)
@@ -109,16 +112,15 @@ def launch(
 
     ############################## Main loop ##################################
     for ts in u.trajectory[start : end + 1]:
-        print(f"Frame {ts.frame} {f'/ {end}':>5}", end="\r", flush=True)
+        if _progress_queue is not None:
+            _progress_queue.put(1)
         # select all atoms in systems
         system = u.select_atoms(f"resname {lipid_names} or protein")
         wrapmessage = "The system is not wrapped, please use the --no-wrapped option."
-        assert min(system.positions[:,0]) >= 0.0, wrapmessage
-        assert max(system.positions[:,0]) <= u.dimensions[0], wrapmessage
-        assert min(system.positions[:,1]) >= 0.0, wrapmessage
-        assert max(system.positions[:,1]) <= u.dimensions[1], wrapmessage
-        assert min(system.positions[:,2]) >= 0.0, wrapmessage
-        assert max(system.positions[:,2]) <= u.dimensions[2], wrapmessage
+        for dim in [0,1,2]:
+            if min(system.positions[:,dim]) < 0.0 or max(system.positions[:,dim]) > u.dimensions[dim]:
+                print("The system is not wrapped, please use the --no-wrapped option.")
+                sys.exit()
         # Get all the residues in the membrane
         res_ids = system.resids
         md_uniq_ids = list(set(res_ids))
@@ -169,8 +171,6 @@ def launch(
         z_atoms = system.positions[:, 2].round(DECIMALS)
         coords = np.stack((x_atoms, y_atoms, z_atoms), axis=1)
         # Get membrane dimension
-        #xmin, xmax = a.min_max(x_atoms)
-        #ymin, ymax = a.min_max(y_atoms)
         zmin, zmax, zmean = a.min_max_mean(z_atoms)
 
         # Build an array from glycerol sn2 C + offset to zmax every SIZE
@@ -260,7 +260,6 @@ def launch(
 
         #### Deep ####
         # Binarise
-        # Finding aliph or polar gives True entries
         MatrixUp_Deepbin = m.binarize_matrix_without0(
             Matrix_Up, -0.01, 0.001
         )
@@ -283,34 +282,6 @@ def launch(
             area_defectsLo_Deep,
             firstCoorLo_defects_Deep,
         ) = cc.get_connected_components(MatrixLo_Deepbin, MatrixLo_labels_Deep)
-
-        # The edge romaval funny business
-        if LEGACY:
-            # Get cluster on the edge
-            edge_labelsUp_Deep: list[int] = cc.get_edge_defects(MatrixUp_labels_Deep)
-            edge_labelsLo_Deep: list[int] = cc.get_edge_defects(MatrixLo_labels_Deep)
-            # Count area of the edge
-            area_edgeUp_Deep: int = m.count_edge_area(area_defectsUp_Deep, edge_labelsUp_Deep)
-            area_edgeLo_Deep: int = m.count_edge_area(area_defectsLo_Deep, edge_labelsLo_Deep)
-            mbc = MatrixUp_labels_Deep.copy()
-            # Clean dico defects (without edge)
-            area_defectsUp_Deep = d.del_key_dict(area_defectsUp_Deep, edge_labelsUp_Deep)
-            firstCoorUp_defects_Deep = d.del_key_dict(
-                firstCoorUp_defects_Deep, edge_labelsUp_Deep
-            )
-            area_defectsLo_Deep = d.del_key_dict(area_defectsLo_Deep, edge_labelsLo_Deep)
-            firstCoorLo_defects_Deep = d.del_key_dict(
-                firstCoorLo_defects_Deep, edge_labelsLo_Deep
-            )
-            for edge_lab in edge_labelsUp_Deep:
-                ind = np.where(MatrixUp_labels_Deep == edge_lab)
-                MatrixUp_labels_Deep[ind] = 0
-            for edge_lab in edge_labelsLo_Deep:
-                ind = np.where(MatrixLo_labels_Deep == edge_lab)
-                MatrixLo_labels_Deep[ind] = 0
-        else:
-            area_edgeUp_Deep: int = 0
-            area_edgeLo_Deep: int = 0
 
         #### All ####
         # Binarise
@@ -337,33 +308,6 @@ def launch(
             firstCoorLo_defects_All,
         ) = cc.get_connected_components(MatrixLo_Allbin, MatrixLo_labels_All)
 
-        # The edge romaval funny business
-        if LEGACY:
-            # Get cluster on the edge
-            edge_labelsUp_All: list[int] = cc.get_edge_defects(MatrixUp_labels_All)
-            edge_labelsLo_All: list[int] = cc.get_edge_defects(MatrixLo_labels_All)
-            # Count area of the edge
-            area_edgeUp_All: int = m.count_edge_area(area_defectsUp_All, edge_labelsUp_All)
-            area_edgeLo_All: int = m.count_edge_area(area_defectsLo_All, edge_labelsLo_All)
-            # Clean dico defects (without edge)
-            area_defectsUp_All = d.del_key_dict(area_defectsUp_All, edge_labelsUp_All)
-            firstCoorUp_defects_All = d.del_key_dict(
-                firstCoorUp_defects_All, edge_labelsUp_All
-            )
-            area_defectsLo_All = d.del_key_dict(area_defectsLo_All, edge_labelsLo_All)
-            firstCoorLo_defects_All = d.del_key_dict(
-                firstCoorLo_defects_All, edge_labelsLo_All
-            )
-            for edge_lab in edge_labelsUp_All:
-                ind = np.where(MatrixUp_labels_All == edge_lab)
-                MatrixUp_labels_All[ind] = 0
-            for edge_lab in edge_labelsLo_All:
-                ind = np.where(MatrixLo_labels_All == edge_lab)
-                MatrixLo_labels_All[ind] = 0
-        else:
-            area_edgeUp_All: int = 0
-            area_edgeLo_All: int = 0
-
         #### Shallow ####
         # Binarise
         shallow_mask_Up = (MatrixUp_labels_All != 0) & (MatrixUp_labels_Deep == 0)
@@ -386,35 +330,6 @@ def launch(
             area_defectsLo_Shallow,
             firstCoorLo_defects_Shallow,
         ) = cc.get_connected_components(MatrixLo_Shallowbin, MatrixLo_labels_Shallow)
-        # The edge romaval funny business
-        if LEGACY:
-
-            # Get cluster on the edge
-            edge_labelsUp_Shallow = cc.get_edge_defects(MatrixUp_labels_Shallow)
-            edge_labelsLo_Shallow = cc.get_edge_defects(MatrixLo_labels_Shallow)
-            # Count area of the edge
-            area_edgeUp_Shallow: int = m.count_edge_area(
-                area_defectsUp_Shallow, edge_labelsUp_Shallow
-            )
-            area_edgeLo_Shallow: int = m.count_edge_area(
-                area_defectsLo_Shallow, edge_labelsLo_Shallow
-            )
-            # Clean dico defects (without edge)
-            area_defectsUp_Shallow = d.del_key_dict(
-                area_defectsUp_Shallow, edge_labelsUp_Shallow
-            )
-            firstCoorUp_defects_Shallow = d.del_key_dict(
-                firstCoorUp_defects_Shallow, edge_labelsUp_Shallow
-            )
-            area_defectsLo_Shallow = d.del_key_dict(
-                area_defectsLo_Shallow, edge_labelsLo_Shallow
-            )
-            firstCoorLo_defects_Shallow = d.del_key_dict(
-                firstCoorLo_defects_Shallow, edge_labelsLo_Shallow
-            )
-        else:
-            area_edgeUp_Shallow: int = 0
-            area_edgeLo_Shallow: int = 0
 
         ####################  Output text file  #################
         # Compute the total area of the matrix
@@ -424,7 +339,6 @@ def launch(
             area_defectsUp_Deep,
             firstCoorUp_defects_Deep,
             total_area,
-            area_edgeUp_Deep,
             arrayX,
             arrayY,
         )
@@ -433,7 +347,6 @@ def launch(
             area_defectsLo_Deep,
             firstCoorLo_defects_Deep,
             total_area,
-            area_edgeLo_Deep,
             arrayX,
             arrayY,
         )
@@ -442,7 +355,6 @@ def launch(
             area_defectsUp_Shallow,
             firstCoorUp_defects_Shallow,
             total_area,
-            area_edgeUp_Shallow,
             arrayX,
             arrayY,
         )
@@ -451,7 +363,6 @@ def launch(
             area_defectsLo_Shallow,
             firstCoorLo_defects_Shallow,
             total_area,
-            area_edgeLo_Shallow,
             arrayX,
             arrayY,
         )
@@ -460,7 +371,6 @@ def launch(
             area_defectsUp_All,
             firstCoorUp_defects_All,
             total_area,
-            area_edgeUp_All,
             arrayX,
             arrayY,
         )
@@ -469,7 +379,6 @@ def launch(
             area_defectsLo_All,
             firstCoorLo_defects_All,
             total_area,
-            area_edgeLo_All,
             arrayX,
             arrayY,
         )
@@ -677,15 +586,6 @@ def launch(
                     DefectsLo_labels_group_All,
                     area_defectsLo_All,
                 )
-
-    print("-- Analysis over --")
-    ran_time = round((time.time() - start_time) / 60, DECIMALS)
-    if ran_time < 1:
-        print(f"-- Ran for {round((time.time() - start_time), DECIMALS)} second(s) --")
-    elif ran_time < 60:
-        print(f"-- Ran for {ran_time} minute(s) --")
-    else:
-        print(f"-- Ran for {round((ran_time / 60), DECIMALS)} hour(s) --")
 
 
 def main() -> None:

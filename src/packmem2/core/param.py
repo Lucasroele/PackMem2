@@ -122,9 +122,7 @@ def check_ending_frame(end, topo, traj):
     INPUT
     end: int
         The new ending frame
-    end: int
-        The new ending frame
-    topo: string
+u    topo: string
         The name of the topology file
     traj: string
         The name of the trajectory file
@@ -132,10 +130,10 @@ def check_ending_frame(end, topo, traj):
     u = mda.Universe(topo, traj, to_guess=())
     total_frames = len(u.trajectory)
     if end == None:
-        end = total_frames
-    elif end > total_frames:
-        warnings.warn("The ending frame number given is greater than the number of frames in the trajectory given")
-        end = total_frames
+        end = total_frames - 1
+    elif end >= total_frames:
+        warnings.warn("The ending frame number given is greater than the number of frames in the trajectory given, so the ending frame number is set to the last frame of the trajectory.")
+        end = total_frames - 1
     return end
 
 

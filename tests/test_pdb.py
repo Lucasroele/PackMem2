@@ -6,16 +6,15 @@ import packmem2.core.pdb as pdb
 def test_outputTXT_defects(tmp_path):
     dict_area = {2: 1}
     dict_coord = {2: [1, 1]}
-    tot_area =  4
-    tot_edge = 3
+    tot_area =  1
     arrayX = [-1., 0.]
     arrayY = [-3., -2.]
 
-    pdb.outputTXT_defects(f"{tmp_path}/output", dict_area, dict_coord, tot_area, tot_edge, arrayX, arrayY)
+    pdb.outputTXT_defects(f"{tmp_path}/output", dict_area, dict_coord, tot_area, arrayX, arrayY)
 
     with open(f"{tmp_path}/output.txt", 'r') as file_test:
         content = file_test.readlines()
-    wanted_lines = ["## MatrixSize     4 \n",
+    wanted_lines = ["## MatrixSize     1 \n",
                     "## Total    1     1 1.00 100.000\n",
                     "  1    1     0.00    -2.00 \n"]
     assert content == wanted_lines

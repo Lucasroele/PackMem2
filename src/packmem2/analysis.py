@@ -127,12 +127,12 @@ def fit_decay(x: np.array, y: np.array, limx: int | float, limy: float) -> tuple
         array[float, float]: the fit of the distribution
         float: the r_squared of the fit
     """
-    # fit with defects above LIMX nm and proba > LIMY
+    # fit with defects above LIMX nm^2 and proba > LIMY
     y = y[x >= limx]
     x = x[x >= limx]
     x = x[y >= limy]
     y = y[y >= limy]
-    if len(x) < 2 or len(y) < 2:
+    if len(x) < 2 or len(y) < 2 or np.all(y == y.flat[0]):
         raise TypeError("Not enough data to perform the fit."
             "\nPlease check that enough frames were given to packmem2"
             " or that you have well supplied all the lipids in your system with the -l option(separated by '_') to packmem2"
@@ -140,6 +140,7 @@ def fit_decay(x: np.array, y: np.array, limx: int | float, limy: float) -> tuple
     FIT = np.polyfit(x, log(y), 1)
     # As the fit is linear
     r_squared = np.corrcoef(x, log(y))[0, 1] ** 2
+
     if r_squared < 0.9:
         warnings.warn(f"Warning: r_squared is low ({r_squared:.2f})."
                       "Please provide more frames to packmem2")
@@ -237,13 +238,19 @@ def compute_decay(
     float
         The inverse decay.
     """
-    H = plt.hist(area_dtf, bins=np.arange(0.5, max(area_dtf) + 0.5))
+    H = plt.hist(area_dtf, bins=np.arange(0.5, max(area_dtf) + 1.5))
     # Length of the defects
     x = H[1][:-1] + 0.5
     # nb of observations of a certain defect length
     y = H[0] / sum(H[0])
     FIT, r_squared = fit_decay(x, y, limx, limy)
-
+    if r_squared is np.nan:
+        warnings.warn(
+            f"r_squared is undefined for {defect} {name}.\n"
+            "Please provide more frames to packmem2",
+            RuntimeWarning,
+            stacklevel=2,
+        )
     if plot:
         plot_defect_fit(name, defect, FIT, x, y, r_squared, limx, limy, pdf)
 
@@ -263,7 +270,7 @@ def block_averaging(
     pdf: PdfPages,
 ) -> list[float, float, float]:
     """
-    Divide the packing data into n_block blocks.
+    Divide the packing data into n_block blocks. These blocks are partitions of the simulation trajectory.
 
     --------------------
     INPUT

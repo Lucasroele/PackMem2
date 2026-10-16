@@ -10,7 +10,6 @@ def outputTXT_defects(
     area_defects: dict,
     first_coord: dict,
     total_size: int,
-    total_edge: int,
     arrayX: np.array,
     arrayY: np.array,
 ) -> None:
@@ -32,8 +31,6 @@ def outputTXT_defects(
         Contains the first appearance of the label in the matrix
     total_size: int
         The total area of the matrix
-    total_edge: int
-        The sum of the defect areas on the edge
     arrayX: numpy array
         Array from xmin-1 to xmax+1 by step of 1.0
     arrayY: numpy array
@@ -43,7 +40,7 @@ def outputTXT_defects(
         f_result.write(f"## MatrixSize {total_size:5d} \n")
         if len(first_coord) != 0:
             f_result.write(
-                f"## Total {len(area_defects):4d} {sum(area_defects.values()):5d} {sum(area_defects.values()) / float(len(area_defects)):4.2f} {(sum(area_defects.values()) * 100.0) / (total_size - total_edge):5.3f}\n"
+                f"## Total {len(area_defects):4d} {sum(area_defects.values()):5d} {sum(area_defects.values()) / float(len(area_defects)):4.2f} {(sum(area_defects.values()) * 100.0) / (total_size):5.3f}\n"
             )
         else:
             # Exception if no defect
